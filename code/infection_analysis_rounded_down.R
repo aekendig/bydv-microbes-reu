@@ -1,7 +1,7 @@
 ##### info ####
 
 # authors: Amy Kendig and Casey Easterday
-# date last edited: 10/7/20
+# date last edited: 10/8/20
 # goal: analyze data when only PCR bands at least as intense as controls are counted as indicators of infection (rounding down)
 
 
@@ -12,6 +12,7 @@ rm(list = ls())
 
 # load packages
 library(tidyverse)
+library(MuMIn)
 
 # import data
 dat <- read_csv("intermediate-data/bydv_microbes_data_rounded_down.csv")
@@ -25,7 +26,7 @@ dat2 <- dat %>%
          disease = fct_relevel(disease, "Healthy", "PAV", "RPV"),
          nitrogen_added = fct_relevel(nitrogen_added, "low", "high"))
 
-# seperate by virus
+# separate by virus
 pav_dat <- dat2 %>%
   filter(inoc_pav == 1)
 
@@ -55,14 +56,24 @@ ggplot(rpv_dat, aes(soil, rpv, color = nitrogen_added)) +
 #### PAV model ####
 
 # initial fit
-pav_mod1 <- glm(pav ~ soil * nitrogen_added * inoc_rpv, data = pav_dat, family = binomial)
+pav_mod1 <- glm(pav ~ soil * N_added * inoc_rpv, data = pav_dat, family = binomial,
+                na.action = na.fail)
 summary(pav_mod1)
-# no significant effects
+# all the standard errors are the same because the intercept is only 1's
+
+# model average using AIC
+pav_mod_avg <- model.avg(get.models(dredge(pav_mod1), subset = cumsum(weight) <= .95))
+summary(pav_mod_avg)
 
 
 #### RPV model ####
 
 # initial fit
-rpv_mod1 <- glm(rpv ~ soil * nitrogen_added * inoc_pav, data = rpv_dat, family = binomial)
+rpv_mod1 <- glm(rpv ~ soil * nitrogen_added * inoc_pav, data = rpv_dat, family = binomial,
+                na.action = na.fail)
 summary(rpv_mod1)
 # no significant effects
+
+# model average using AIC
+rpv_mod_avg <- model.avg(get.models(dredge(rpv_mod1), subset = cumsum(weight) <= .95))
+summary(rpv_mod_avg)

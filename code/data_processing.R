@@ -1,7 +1,7 @@
 ##### info ####
 
 # authors: Amy Kendig and Casey Easterday
-# date last edited: 10/7/20
+# date last edited: 10/8/20
 # goal: prepare data for statistical analyses
 
 
@@ -31,6 +31,7 @@ dat2 <- dat %>%
          inoc_rpv = ifelse(disease %in% c("RPV", "Co"), 1, 0),
          nitrogen_added = ifelse(nutrient == "Ctrl", "low", "high"),
          N_added = ifelse(nitrogen_added == "low", 0, 1),
+         N_limit = ifelse(nitrogen_added == "low", 1, 0),
          soil = recode(soil, Sterile = "sterile", A = "low", D = "medium", H = "high"),
          soil_N = case_when(soil %in% c("sterile", "low") ~ 0,
                             soil == "medium" ~ 34,
