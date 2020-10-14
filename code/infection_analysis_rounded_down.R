@@ -1,7 +1,7 @@
 ##### info ####
 
 # authors: Amy Kendig and Casey Easterday
-# date last edited: 10/13/20
+# date last edited: 10/14/20
 # goal: analyze data when only PCR bands at least as intense as controls are counted as indicators of infection (rounding down)
 
 
@@ -12,7 +12,7 @@ rm(list = ls())
 
 # load packages
 library(tidyverse)
-library(MuMIn)
+library(brms)
 library(cowplot)
 
 # import data
@@ -36,6 +36,10 @@ pav_dat <- dat2 %>%
 
 rpv_dat <- dat2 %>%
   filter(inoc_rpv == 1)
+
+# microbe comparison
+pav_dat_microbes = filter(pav_dat, soil_N == 0)
+rpv_dat_microbes = filter(rpv_dat, soil_N == 0)
 
 
 #### visualize ####
@@ -113,18 +117,23 @@ dev.off()
 
 #### PAV model ####
 
-# initial fit
-pav_mod1 <- glm(pav ~ soil * N_added * inoc_rpv, data = pav_dat, 
-                family = binomial,
-                na.action = na.fail)
+# effect of microbes
+pav_mod1 <- brm(pav ~ microbes * N_added * inoc_rpv,
+                data = pav_dat_microbes, 
+                family = bernoulli,
+                prior = c(prior(normal(0, 10), class = Intercept),
+                          prior(normal(0, 10), class = b)),
+                iter = 6000, warmup = 1000, chains = 1)
 summary(pav_mod1)
-# no significant effects
-# many of the standard errors are the same because the intercept is only 1's
 
-# model average using AIC
-pav_mod_avg <- model.avg(dredge(pav_mod1), cumsum(weight) <= 0.95)
-summary(pav_mod_avg)
-# copied and pasted output to Excel
+# add chains
+pav_mod2 <- update(pav_mod1, chains = 3)
+summary(pav_mod2)
+plot(pav_mod2)
+pp_check(pav_mod2, nsamples = 50)
+
+#### left off here ####
+
 
 
 #### RPV model ####
@@ -141,5 +150,6 @@ summary(rpv_mod_avg)
 # copied and pasted output to Excel
 
 
-#### text ####
+#### output ####
 
+save(pav_mod2, file = "output/pav_microbes_model_rounded_down.rda")
