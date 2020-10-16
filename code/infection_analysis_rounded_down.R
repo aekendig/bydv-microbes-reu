@@ -14,6 +14,7 @@ rm(list = ls())
 library(tidyverse)
 library(brms)
 library(cowplot)
+library(tidybayes)
 
 # import data
 dat <- read_csv("intermediate-data/bydv_microbes_data_rounded_down.csv")
@@ -38,8 +39,8 @@ rpv_dat <- dat2 %>%
   filter(inoc_rpv == 1)
 
 # microbe comparison
-pav_dat_microbes = filter(pav_dat, soil_N == 0)
-rpv_dat_microbes = filter(rpv_dat, soil_N == 0)
+pav_microbe_dat = filter(pav_dat, soil_N == 0)
+rpv_microbe_dat = filter(rpv_dat, soil_N == 0)
 
 
 #### visualize ####
@@ -115,41 +116,158 @@ plot_grid(pav_fig, rpv_fig,
 dev.off()
 
 
-#### PAV model ####
+#### PAV microbe model ####
 
-# effect of microbes
-pav_mod1 <- brm(pav ~ microbes * N_added * inoc_rpv,
-                data = pav_dat_microbes, 
-                family = bernoulli,
-                prior = c(prior(normal(0, 10), class = Intercept),
-                          prior(normal(0, 10), class = b)),
-                iter = 6000, warmup = 1000, chains = 1)
-summary(pav_mod1)
-
-# add chains
-pav_mod2 <- update(pav_mod1, chains = 3)
-summary(pav_mod2)
-plot(pav_mod2)
-pp_check(pav_mod2, nsamples = 50)
-
-#### left off here ####
-
-
-
-#### RPV model ####
+# intercept
+pav_microbe_dat %>%
+  filter(microbes == 0 & N_added == 0 & inoc_rpv == 0) %>%
+  summarise(mean = mean(pav),
+            zeros = sum(pav == 0))
 
 # initial fit
-rpv_mod1 <- glm(rpv ~ soil * N_added * inoc_pav, data = rpv_dat, 
-                family = binomial,
-                na.action = na.fail)
-summary(rpv_mod1)
+pav_microbe_mod1 <- brm(pav ~ microbes * N_added * inoc_rpv,
+                data = pav_microbe_dat, 
+                family = bernoulli,
+                prior = c(prior(normal(0, 100), class = Intercept),
+                          prior(normal(0, 50), class = b)),
+                iter = 6000, warmup = 1000, chains = 1)
+summary(pav_microbe_mod1)
 
-# model average using AIC
-rpv_mod_avg <- model.avg(dredge(rpv_mod1), subset = cumsum(weight) <= .95)
-summary(rpv_mod_avg)
-# copied and pasted output to Excel
+# add chains
+pav_microbe_mod2 <- update(pav_microbe_mod1, chains = 3)
+
+# check model
+summary(pav_microbe_mod2)
+plot(pav_microbe_mod2)
+pp_check(pav_microbe_mod2, nsamples = 50)
+
+# treatments
+pav_microbe_trt <- pav_microbe_dat %>%
+  select(microbes, N_added, inoc_rpv) %>%
+  unique()
+
+# posterior samples
+pav_microbe_post <- as_tibble(posterior_samples(pav_microbe_mod2))
+
+# prevalence
+pav_microbe_prev <- pav_microbe_trt %>%
+  expand_grid(pav_microbe_post) %>%
+  rename_with(~ gsub(":", "_", .x, fixed = T)) %>%
+  mutate(lin_exp = b_Intercept + 
+           b_microbes * microbes + 
+           b_N_added * N_added + 
+           b_inoc_rpv * inoc_rpv +
+           b_microbes_N_added * microbes * N_added +
+           b_microbes_inoc_rpv * microbes * inoc_rpv +
+           b_N_added_inoc_rpv * N_added * inoc_rpv +
+           b_microbes_N_added_inoc_rpv * microbes * N_added * inoc_rpv,
+         prev = exp(lin_exp) / (1 + exp(lin_exp)) * 100) %>%
+  select(-c(b_Intercept:lin_exp))
+
+# summary
+pav_microbe_prev %>%
+  group_by(microbes, N_added, inoc_rpv) %>%
+  mean_hdci() %>%
+  mutate(prev = round(prev),
+         .lower = round(.lower),
+         .upper = round(.upper))
+# hdi splits the interval of the 0/0/0 treatment into three, but the discontinuities are on the scale of 0.001
+
+# treatment effects
+pav_microbe_prev %>%
+  mutate(microbes = recode(microbes, "0" = "sterile", "1" = "microbes"),
+         N_added = recode(N_added, "0" = "lowN", "1" = "hiN"),
+         inoc_rpv = recode(inoc_rpv, "0" = "single", "1" = "co"),
+         treatment = paste(microbes, N_added, inoc_rpv, sep = "_"),
+         replicate = rep(seq(1:15000), 8)) %>%
+  select(-c(microbes:inoc_rpv)) %>%
+  pivot_wider(names_from = treatment, values_from = prev) %>%
+  mutate(N_eff = sterile_hiN_single - sterile_lowN_single,
+         mic_lowN_eff = microbes_lowN_single - sterile_lowN_single,
+         mic_hiN_eff = microbes_hiN_single - sterile_hiN_single,
+         co_lowN_eff = sterile_lowN_co - sterile_lowN_single,
+         co_hiN_eff = sterile_hiN_co - sterile_hiN_single) %>%
+  select(-c(replicate:sterile_hiN_single)) %>%
+  pivot_longer(cols = N_eff:co_hiN_eff, names_to = "treatment", values_to = "effect") %>%
+  group_by(treatment) %>%
+  mean_hdi %>%
+  mutate(effect = round(effect),
+         .lower = round(.lower),
+         .upper = round(.upper))
+  
+
+#### RPV microbe model ####
+
+# initial fit
+rpv_microbe_mod1 <- brm(rpv ~ microbes * N_added * inoc_pav,
+                        data = rpv_microbe_dat, 
+                        family = bernoulli,
+                        prior = c(prior(normal(0, 100), class = Intercept),
+                                  prior(normal(0, 50), class = b)),
+                        iter = 6000, warmup = 1000, chains = 1)
+summary(rpv_microbe_mod1)
+
+# add chains
+rpv_microbe_mod2 <- update(rpv_microbe_mod1, chains = 3)
+
+# check model
+summary(rpv_microbe_mod2)
+plot(rpv_microbe_mod2)
+pp_check(rpv_microbe_mod2, nsamples = 50)
+
+# treatments
+rpv_microbe_trt <- rpv_microbe_dat %>%
+  select(microbes, N_added, inoc_pav) %>%
+  unique()
+
+# posterior samples
+rpv_microbe_post <- as_tibble(posterior_samples(rpv_microbe_mod2))
+
+# prevalence
+rpv_microbe_prev <- rpv_microbe_trt %>%
+  expand_grid(rpv_microbe_post) %>%
+  rename_with(~ gsub(":", "_", .x, fixed = T)) %>%
+  mutate(lin_exp = b_Intercept + 
+           b_microbes * microbes + 
+           b_N_added * N_added + 
+           b_inoc_pav * inoc_pav +
+           b_microbes_N_added * microbes * N_added +
+           b_microbes_inoc_pav * microbes * inoc_pav +
+           b_N_added_inoc_pav * N_added * inoc_pav +
+           b_microbes_N_added_inoc_pav * microbes * N_added * inoc_pav,
+         prev = exp(lin_exp) / (1 + exp(lin_exp)) * 100) %>%
+  select(-c(b_Intercept:lin_exp))
+
+# summary
+rpv_microbe_prev %>%
+  group_by(microbes, N_added, inoc_pav) %>%
+  mean_hdci() %>%
+  mutate(prev = round(prev),
+         .lower = round(.lower),
+         .upper = round(.upper))
+# hdi splits the interval of the 0/0/0 treatment into three, but the discontinuities are on the scale of 0.001
+
+# treatment effects
+rpv_microbe_prev %>%
+  mutate(microbes = recode(microbes, "0" = "sterile", "1" = "microbes"),
+         N_added = recode(N_added, "0" = "lowN", "1" = "hiN"),
+         inoc_pav = recode(inoc_pav, "0" = "single", "1" = "co"),
+         treatment = paste(microbes, N_added, inoc_pav, sep = "_"),
+         replicate = rep(seq(1:15000), 8)) %>%
+  select(-c(microbes:inoc_pav)) %>%
+  pivot_wider(names_from = treatment, values_from = prev) %>%
+  mutate(mic_lowN_eff = microbes_lowN_single - sterile_lowN_single,
+         mic_hiN_eff = microbes_hiN_single - sterile_hiN_single) %>%
+  select(-c(replicate:sterile_hiN_single)) %>%
+  pivot_longer(cols = mic_lowN_eff:mic_hiN_eff, names_to = "treatment", values_to = "effect") %>%
+  group_by(treatment) %>%
+  mean_hdi %>%
+  mutate(effect = round(effect),
+         .lower = round(.lower),
+         .upper = round(.upper))
 
 
 #### output ####
 
-save(pav_mod2, file = "output/pav_microbes_model_rounded_down.rda")
+save(pav_microbe_mod2, file = "output/pav_microbe_model_rounded_down.rda")
+save(rpv_microbe_mod2, file = "output/rpv_microbe_model_rounded_down.rda")
