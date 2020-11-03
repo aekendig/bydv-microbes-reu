@@ -24,7 +24,7 @@ dat <- read_csv("intermediate-data/bydv_microbes_data_rounded_down.csv")
 
 # reorganize factor levels
 dat2 <- dat %>%
-  mutate(soil = fct_relevel(soil, "sterile", "low", "medium", "high"),
+  mutate(soil = fct_relevel(soil, "sterile", "ambient N", "low N"),
          inoculation = case_when(disease %in% c("PAV", "RPV") ~ "Single inoculation",
                                  disease == "Co" ~ "Co-inoculation",
                                  disease == "Healthy" ~ "Mock inoculation") %>%
@@ -41,6 +41,10 @@ rpv_dat <- dat2 %>%
 # microbe comparison
 pav_microbe_dat = filter(pav_dat, soil_N == 0)
 rpv_microbe_dat = filter(rpv_dat, soil_N == 0)
+
+# soil N comparison
+pav_soil_dat = filter(pav_dat, microbes == 1)
+rpv_soil_dat = filter(rpv_dat, microbes == 1)
 
 
 #### visualize ####
@@ -101,7 +105,7 @@ rpv_fig <- ggplot(rpv_dat, aes(soil, rpv, fill = nitrogen_added, shape = inocula
   scale_fill_manual(values = col_pal, name = "N supply") +
   scale_shape_manual(values = shape_pal, guide = F) +
   guides(fill = guide_legend(override.aes = list(shape = 21))) +
-  xlab("Field soil N treatment") +
+  xlab("Soil microbes") +
   ylab("RPV infection prevalence") +
   theme_def +
   theme(legend.position = "none",
@@ -196,6 +200,46 @@ pav_microbe_prev %>%
          .upper = round(.upper))
   
 
+#### PAV soil N model ####
+
+# initial fit
+pav_soil_mod1 <- brm(pav ~ soil_N * N_added * inoc_rpv,
+                     data = pav_soil_dat, 
+                     family = bernoulli,
+                     prior = c(prior(normal(0, 100), class = Intercept),
+                               prior(normal(0, 50), class = b)),
+                     iter = 6000, warmup = 1000, chains = 1)
+summary(pav_soil_mod1)
+
+# add chains
+pav_soil_mod2 <- update(pav_soil_mod1, chains = 3)
+
+# check model
+summary(pav_soil_mod2)
+plot(pav_soil_mod2)
+pp_check(pav_soil_mod2, nsamples = 50)
+
+# simulate data
+pav_soilN_sim <- tibble(soil_N = rep(0:272, 4),
+                    N_added = rep(c(0, 1), each = 273 * 2),
+                    inoc_rpv = rep(c(0, 1, 0, 1), each = 273)) %>%
+  mutate(pav = fitted(pav_soil_mod2, newdata = ., type = "response")[, "Estimate"],
+         pav_lower = fitted(pav_soil_mod2, newdata = ., type = "response")[, "Q2.5"],
+         pav_upper = fitted(pav_soil_mod2, newdata = ., type = "response")[, "Q97.5"],
+         nitrogen_added = ifelse(N_added == 0, "low", "high") %>%
+           fct_relevel("low"),
+         inoculation = ifelse(inoc_rpv == 0, "Single inoculation", "Co-inoculation") %>%
+           fct_relevel("Single inoculation"))
+
+# figure
+ggplot(pav_soil_dat, aes(soil_N, pav, color = nitrogen_added)) +
+  stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(5)) +
+  stat_summary(geom = "point", fun = "mean", size = 3, position = position_dodge(5)) +
+  geom_ribbon(data = pav_soilN_sim, aes(ymin = pav_lower, ymax = pav_upper, fill = nitrogen_added), alpha = 0.5, color = NA) +
+  geom_line(data = pav_soilN_sim) +
+  facet_wrap(~ inoculation)
+
+
 #### RPV microbe model ####
 
 # initial fit
@@ -267,7 +311,11 @@ rpv_microbe_prev %>%
          .upper = round(.upper))
 
 
+#### start here with RPV soil N model ####
+
+
 #### output ####
 
 save(pav_microbe_mod2, file = "output/pav_microbe_model_rounded_down.rda")
+save(pav_soil_mod2, file = "output/pav_soilN_model_rounded_down.rda")
 save(rpv_microbe_mod2, file = "output/rpv_microbe_model_rounded_down.rda")
