@@ -12,9 +12,8 @@ rm(list = ls())
 
 # load packages
 library(tidyverse)
-library(brms)
 library(cowplot)
-library(tidybayes)
+library(broom)
 
 # import data
 dat <- read_csv("intermediate-data/bydv_microbes_data_rounded_down.csv")
@@ -39,12 +38,12 @@ rpv_dat <- dat2 %>%
   filter(inoc_rpv == 1)
 
 # microbe comparison
-pav_microbe_dat = filter(pav_dat, soil_N == 0)
-rpv_microbe_dat = filter(rpv_dat, soil_N == 0)
-
-# soil N comparison
-pav_soil_dat = filter(pav_dat, microbes == 1)
-rpv_soil_dat = filter(rpv_dat, microbes == 1)
+# pav_microbe_dat = filter(pav_dat, soil_N == 0)
+# rpv_microbe_dat = filter(rpv_dat, soil_N == 0)
+# 
+# # soil N comparison
+# pav_soil_dat = filter(pav_dat, microbes == 1)
+# rpv_soil_dat = filter(rpv_dat, microbes == 1)
 
 
 #### visualize ####
@@ -89,7 +88,7 @@ pav_fig  <- ggplot(pav_dat, aes(soil, pav, fill = nitrogen_added, shape = inocul
   scale_shape_manual(values = shape_pal, guide = F) +
   guides(fill = guide_legend(override.aes = list(shape = 21), direction = "horizontal", title.position = "top")) +
   xlab("Field soil N treatment") +
-  ylab("PAV infection prevalence") +
+  ylab("PAV incidence") +
   theme_def +
   theme(legend.position = c(0.13, 0.13),
         axis.title.x = element_blank())
@@ -106,7 +105,7 @@ rpv_fig <- ggplot(rpv_dat, aes(soil, rpv, fill = nitrogen_added, shape = inocula
   scale_shape_manual(values = shape_pal, guide = F) +
   guides(fill = guide_legend(override.aes = list(shape = 21))) +
   xlab("Soil microbes") +
-  ylab("RPV infection prevalence") +
+  ylab("RPV incidence") +
   theme_def +
   theme(legend.position = "none",
         strip.text = element_blank())
@@ -120,202 +119,104 @@ plot_grid(pav_fig, rpv_fig,
 dev.off()
 
 
-#### PAV microbe model ####
+#### PAV model ####
 
-# intercept
-pav_microbe_dat %>%
-  filter(microbes == 0 & N_added == 0 & inoc_rpv == 0) %>%
-  summarise(mean = mean(pav),
-            zeros = sum(pav == 0))
+# full model
+pav_mod1 <- glm(pav ~ soil * N_added * inoc_rpv, 
+                data = pav_dat,
+                family = "binomial")
+summary(pav_mod1)
 
-# initial fit
-pav_microbe_mod1 <- brm(pav ~ microbes * N_added * inoc_rpv,
-                data = pav_microbe_dat, 
-                family = bernoulli,
-                prior = c(prior(normal(0, 100), class = Intercept),
-                          prior(normal(0, 50), class = b)),
-                iter = 6000, warmup = 1000, chains = 1)
-summary(pav_microbe_mod1)
+# remove 3-way interaction?
+pav_mod2 <- update(pav_mod1, ~. -soil:N_added:inoc_rpv)
+summary(pav_mod2)
+anova(pav_mod1, pav_mod2, test = "Chi") # yes
 
-# add chains
-pav_microbe_mod2 <- update(pav_microbe_mod1, chains = 3)
+# remove 2-way interactions?
+pav_mod3 <- update(pav_mod2, ~. -N_added:inoc_rpv)
+summary(pav_mod3)
+anova(pav_mod2, pav_mod3, test = "Chi") # yes
 
-# check model
-summary(pav_microbe_mod2)
-plot(pav_microbe_mod2)
-pp_check(pav_microbe_mod2, nsamples = 50)
+pav_mod4 <- update(pav_mod3, ~. -soil:N_added)
+summary(pav_mod4)
+anova(pav_mod3, pav_mod4, test = "Chi") # yes
 
-# treatments
-pav_microbe_trt <- pav_microbe_dat %>%
-  select(microbes, N_added, inoc_rpv) %>%
-  unique()
+pav_mod5 <- update(pav_mod4, ~. -soil:inoc_rpv)
+summary(pav_mod5)
+anova(pav_mod4, pav_mod5, test = "Chi") # no
 
-# posterior samples
-pav_microbe_post <- as_tibble(posterior_samples(pav_microbe_mod2))
+# remove main effects?
+pav_mod6 <- update(pav_mod4, ~. -N_added)
+summary(pav_mod6)
+anova(pav_mod4, pav_mod6, test = "Chi") # yes
 
-# prevalence
-pav_microbe_prev <- pav_microbe_trt %>%
-  expand_grid(pav_microbe_post) %>%
-  rename_with(~ gsub(":", "_", .x, fixed = T)) %>%
-  mutate(lin_exp = b_Intercept + 
-           b_microbes * microbes + 
-           b_N_added * N_added + 
-           b_inoc_rpv * inoc_rpv +
-           b_microbes_N_added * microbes * N_added +
-           b_microbes_inoc_rpv * microbes * inoc_rpv +
-           b_N_added_inoc_rpv * N_added * inoc_rpv +
-           b_microbes_N_added_inoc_rpv * microbes * N_added * inoc_rpv,
-         prev = exp(lin_exp) / (1 + exp(lin_exp)) * 100) %>%
-  select(-c(b_Intercept:lin_exp))
 
-# summary
-pav_microbe_prev %>%
-  group_by(microbes, N_added, inoc_rpv) %>%
-  mean_hdci() %>%
-  mutate(prev = round(prev),
-         .lower = round(.lower),
-         .upper = round(.upper))
-# hdi splits the interval of the 0/0/0 treatment into three, but the discontinuities are on the scale of 0.001
+#### PAV values ####
 
-# treatment effects
-pav_microbe_prev %>%
-  mutate(microbes = recode(microbes, "0" = "sterile", "1" = "microbes"),
-         N_added = recode(N_added, "0" = "lowN", "1" = "hiN"),
-         inoc_rpv = recode(inoc_rpv, "0" = "single", "1" = "co"),
-         treatment = paste(microbes, N_added, inoc_rpv, sep = "_"),
-         replicate = rep(seq(1:15000), 8)) %>%
-  select(-c(microbes:inoc_rpv)) %>%
-  pivot_wider(names_from = treatment, values_from = prev) %>%
-  mutate(N_eff = sterile_hiN_single - sterile_lowN_single,
-         mic_lowN_eff = microbes_lowN_single - sterile_lowN_single,
-         mic_hiN_eff = microbes_hiN_single - sterile_hiN_single,
-         co_lowN_eff = sterile_lowN_co - sterile_lowN_single,
-         co_hiN_eff = sterile_hiN_co - sterile_hiN_single) %>%
-  select(-c(replicate:sterile_hiN_single)) %>%
-  pivot_longer(cols = N_eff:co_hiN_eff, names_to = "treatment", values_to = "effect") %>%
-  group_by(treatment) %>%
-  mean_hdi %>%
-  mutate(effect = round(effect),
-         .lower = round(.lower),
-         .upper = round(.upper))
+pav_dat %>%
+  filter(soil == "sterile" & inoc_rpv == 0) %>%
+  summarise(mean_pav = mean(pav),
+            se_pav = sd(pav)/sqrt(n()))
+
+pav_dat %>%
+  group_by(soil, disease) %>%
+  summarise(mean_pav = mean(pav)) %>%
+  pivot_wider(names_from = disease,
+              values_from = mean_pav) %>%
+  mutate(change = PAV - Co)
   
 
-#### PAV soil N model ####
 
-# initial fit
-pav_soil_mod1 <- brm(pav ~ soil_N * N_added * inoc_rpv,
-                     data = pav_soil_dat, 
-                     family = bernoulli,
-                     prior = c(prior(normal(0, 100), class = Intercept),
-                               prior(normal(0, 50), class = b)),
-                     iter = 6000, warmup = 1000, chains = 1)
-summary(pav_soil_mod1)
+#### RPV model ####
 
-# add chains
-pav_soil_mod2 <- update(pav_soil_mod1, chains = 3)
+# full model
+rpv_mod1 <- glm(rpv ~ soil * N_added * inoc_pav, 
+                data = rpv_dat,
+                family = "binomial")
+summary(rpv_mod1)
 
-# check model
-summary(pav_soil_mod2)
-plot(pav_soil_mod2)
-pp_check(pav_soil_mod2, nsamples = 50)
+# remove 3-way interaction?
+rpv_mod2 <- update(rpv_mod1, ~. -soil:N_added:inoc_pav)
+summary(rpv_mod2)
+anova(rpv_mod1, rpv_mod2, test = "Chi") # yes
 
-# simulate data
-pav_soilN_sim <- tibble(soil_N = rep(0:272, 4),
-                    N_added = rep(c(0, 1), each = 273 * 2),
-                    inoc_rpv = rep(c(0, 1, 0, 1), each = 273)) %>%
-  mutate(pav = fitted(pav_soil_mod2, newdata = ., type = "response")[, "Estimate"],
-         pav_lower = fitted(pav_soil_mod2, newdata = ., type = "response")[, "Q2.5"],
-         pav_upper = fitted(pav_soil_mod2, newdata = ., type = "response")[, "Q97.5"],
-         nitrogen_added = ifelse(N_added == 0, "low", "high") %>%
-           fct_relevel("low"),
-         inoculation = ifelse(inoc_rpv == 0, "Single inoculation", "Co-inoculation") %>%
-           fct_relevel("Single inoculation"))
+# remove 2-way interactions?
+rpv_mod3 <- update(rpv_mod2, ~. -soil:N_added)
+summary(rpv_mod3)
+anova(rpv_mod2, rpv_mod3, test = "Chi") # yes
 
-# figure
-ggplot(pav_soil_dat, aes(soil_N, pav, color = nitrogen_added)) +
-  stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(5)) +
-  stat_summary(geom = "point", fun = "mean", size = 3, position = position_dodge(5)) +
-  geom_ribbon(data = pav_soilN_sim, aes(ymin = pav_lower, ymax = pav_upper, fill = nitrogen_added), alpha = 0.5, color = NA) +
-  geom_line(data = pav_soilN_sim) +
-  facet_wrap(~ inoculation)
+rpv_mod4 <- update(rpv_mod3, ~. -soil:inoc_pav)
+summary(rpv_mod4)
+anova(rpv_mod3, rpv_mod4, test = "Chi") # yes
+
+rpv_mod5 <- update(rpv_mod4, ~. -N_added:inoc_pav)
+summary(rpv_mod5)
+anova(rpv_mod4, rpv_mod5, test = "Chi") # no
+
+# remove main effects?
+rpv_mod6 <- update(rpv_mod4, ~. -soil)
+summary(rpv_mod6)
+anova(rpv_mod4, rpv_mod6, test = "Chi") # yes
 
 
-#### RPV microbe model ####
+#### RPV values ####
 
-# initial fit
-rpv_microbe_mod1 <- brm(rpv ~ microbes * N_added * inoc_pav,
-                        data = rpv_microbe_dat, 
-                        family = bernoulli,
-                        prior = c(prior(normal(0, 100), class = Intercept),
-                                  prior(normal(0, 50), class = b)),
-                        iter = 6000, warmup = 1000, chains = 1)
-summary(rpv_microbe_mod1)
+rpv_dat %>%
+  filter(N_added == 0 & inoc_pav == 0) %>%
+  summarise(mean_rpv = mean(rpv),
+            se_rpv = sd(rpv)/sqrt(n()))
 
-# add chains
-rpv_microbe_mod2 <- update(rpv_microbe_mod1, chains = 3)
-
-# check model
-summary(rpv_microbe_mod2)
-plot(rpv_microbe_mod2)
-pp_check(rpv_microbe_mod2, nsamples = 50)
-
-# treatments
-rpv_microbe_trt <- rpv_microbe_dat %>%
-  select(microbes, N_added, inoc_pav) %>%
-  unique()
-
-# posterior samples
-rpv_microbe_post <- as_tibble(posterior_samples(rpv_microbe_mod2))
-
-# prevalence
-rpv_microbe_prev <- rpv_microbe_trt %>%
-  expand_grid(rpv_microbe_post) %>%
-  rename_with(~ gsub(":", "_", .x, fixed = T)) %>%
-  mutate(lin_exp = b_Intercept + 
-           b_microbes * microbes + 
-           b_N_added * N_added + 
-           b_inoc_pav * inoc_pav +
-           b_microbes_N_added * microbes * N_added +
-           b_microbes_inoc_pav * microbes * inoc_pav +
-           b_N_added_inoc_pav * N_added * inoc_pav +
-           b_microbes_N_added_inoc_pav * microbes * N_added * inoc_pav,
-         prev = exp(lin_exp) / (1 + exp(lin_exp)) * 100) %>%
-  select(-c(b_Intercept:lin_exp))
-
-# summary
-rpv_microbe_prev %>%
-  group_by(microbes, N_added, inoc_pav) %>%
-  mean_hdci() %>%
-  mutate(prev = round(prev),
-         .lower = round(.lower),
-         .upper = round(.upper))
-# hdi splits the interval of the 0/0/0 treatment into three, but the discontinuities are on the scale of 0.001
-
-# treatment effects
-rpv_microbe_prev %>%
-  mutate(microbes = recode(microbes, "0" = "sterile", "1" = "microbes"),
-         N_added = recode(N_added, "0" = "lowN", "1" = "hiN"),
-         inoc_pav = recode(inoc_pav, "0" = "single", "1" = "co"),
-         treatment = paste(microbes, N_added, inoc_pav, sep = "_"),
-         replicate = rep(seq(1:15000), 8)) %>%
-  select(-c(microbes:inoc_pav)) %>%
-  pivot_wider(names_from = treatment, values_from = prev) %>%
-  mutate(mic_lowN_eff = microbes_lowN_single - sterile_lowN_single,
-         mic_hiN_eff = microbes_hiN_single - sterile_hiN_single) %>%
-  select(-c(replicate:sterile_hiN_single)) %>%
-  pivot_longer(cols = mic_lowN_eff:mic_hiN_eff, names_to = "treatment", values_to = "effect") %>%
-  group_by(treatment) %>%
-  mean_hdi %>%
-  mutate(effect = round(effect),
-         .lower = round(.lower),
-         .upper = round(.upper))
-
-
-#### start here with RPV soil N model ####
+rpv_dat %>%
+  group_by(N_added, disease) %>%
+  summarise(mean_rpv = mean(rpv)) %>%
+  pivot_wider(names_from = disease,
+              values_from = mean_rpv) %>%
+  mutate(change = RPV - Co)
 
 
 #### output ####
+save(pav_mod6, file = "output/pav_model_rounded_down.rda")
+save(rpv_mod6, file = "output/rpv_model_rounded_down.rda")
 
-save(pav_microbe_mod2, file = "output/pav_microbe_model_rounded_down.rda")
-save(pav_soil_mod2, file = "output/pav_soilN_model_rounded_down.rda")
-save(rpv_microbe_mod2, file = "output/rpv_microbe_model_rounded_down.rda")
+write_csv(tidy(pav_mod6), "output/pav_model_rounded_down.csv")
+write_csv(tidy(rpv_mod6), "output/rpv_model_rounded_down.csv")
