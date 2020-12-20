@@ -12,8 +12,7 @@ rm(list = ls())
 
 # load packages
 library(tidyverse)
-library(brms)
-library(tidybayes)
+library(broom)
 
 # import data
 dat <- read_csv("intermediate-data/bydv_microbes_data_rounded_down.csv")
@@ -38,9 +37,6 @@ dat2 <- dat %>%
 # remove coinfection for stats
 bio_dat <- dat2 %>%
   filter(infection != "Co-infection")
-
-# soil N comparison
-bio_soil_dat = filter(bio_dat, microbes == 1)
 
 
 #### visualize ####
@@ -80,84 +76,81 @@ ggplot(dat2, aes(soil, biomass, fill = nitrogen_added)) +
   scale_fill_manual(values = col_pal, name = "N supply") +
   guides(fill = guide_legend(override.aes = list(shape = 21), direction = "horizontal", title.position = "top")) +
   xlab("Field soil N treatment") +
-  ylab("Biomass (g)") +
+  ylab("Aboveground biomass (g/plant)") +
   theme_def +
   theme(legend.position = c(0.88, 0.4))
 dev.off()
 
 
-#### all data model ####
+#### biomass model ####
 
-# initial fit
-bio_mod1 <- brm(log_biomass ~ soil * N_added * infection,
-                     data = bio_dat, 
-                     family = gaussian,
-                     prior = c(prior(normal(0, 10), class = Intercept),
-                               prior(normal(0, 10), class = b),
-                               prior(cauchy(0, 1), class = sigma)),
-                     iter = 6000, warmup = 1000, chains = 1)
+# full model
+bio_mod1 <- lm(log_biomass ~ soil * N_added * infection,
+               data = bio_dat)
 summary(bio_mod1)
 
-# increase chains
-bio_mod2 <- update(bio_mod1, chains = 3)
+# remove 3-way interaction?
+bio_mod2 <- update(bio_mod1, ~. -soil:N_added:infection)
 summary(bio_mod2)
-plot(bio_mod2)
-pp_check(bio_mod2, nsamples = 50)
+anova(bio_mod1, bio_mod2, test = "F") # yes
+
+# remove 2-way interactions?
+bio_mod3 <- update(bio_mod2, ~. -soil:N_added)
+summary(bio_mod3)
+anova(bio_mod2, bio_mod3, test = "Chi") # yes
+
+bio_mod4 <- update(bio_mod3, ~. -N_added:infection)
+summary(bio_mod4)
+anova(bio_mod3, bio_mod4, test = "Chi") # yes
+
+bio_mod5 <- update(bio_mod4, ~. -soil:infection)
+summary(bio_mod5)
+anova(bio_mod4, bio_mod5, test = "Chi") # yes
+
+# remove main effects?
+bio_mod6 <- update(bio_mod5, ~. -soil)
+summary(bio_mod6)
+anova(bio_mod5, bio_mod6, test = "Chi") # yes
+
+bio_mod7 <- update(bio_mod6, ~. -infection)
+summary(bio_mod7)
+anova(bio_mod6, bio_mod7, test = "Chi") # no
+
+bio_mod8 <- update(bio_mod6, ~. -N_added)
+summary(bio_mod8)
+anova(bio_mod6, bio_mod8, test = "Chi") # no
 
 
-#### soil N model ####
+#### biomass values ####
 
-# initial fit
-bio_soil_mod1 <- brm(log_biomass ~ soil_N * N_added * infection,
-                data = bio_soil_dat, 
-                family = gaussian,
-                prior = c(prior(normal(0, 10), class = Intercept),
-                          prior(normal(0, 10), class = b),
-                          prior(cauchy(0, 1), class = sigma)),
-                iter = 6000, warmup = 1000, chains = 1)
-summary(bio_soil_mod1)
+bio_dat %>%
+  filter(N_added == 0 & infection == "Mock inoculation") %>%
+  summarise(mean_bio = mean(biomass),
+            se_bio = sd(biomass)/sqrt(n()))
 
-# increase chains
-bio_soil_mod2 <- update(bio_soil_mod1, chains = 3)
-summary(bio_soil_mod2)
-plot(bio_soil_mod2)
-pp_check(bio_soil_mod2, nsamples = 50)
+bio_dat %>%
+  group_by(nitrogen_added) %>%
+  summarise(mean_bio = mean(biomass)) %>%
+  pivot_wider(names_from = "nitrogen_added",
+              values_from = "mean_bio") %>%
+  mutate(change = high - low)
 
+bio_dat %>%
+  group_by(infection) %>%
+  summarise(mean_bio = mean(biomass)) %>%
+  pivot_wider(names_from = "infection",
+              values_from = "mean_bio") %>%
+  rename("mock" = "Mock inoculation",
+         "PAV" = "PAV infection",
+         "RPV" = "RPV infection") %>%
+  mutate(PAV_change = PAV - mock,
+         RPV_change = RPV - mock)
 
-#### numbers for text ####
-
-# all data model
-(bio_samps <- posterior_samples(bio_mod2) %>%
-  mutate(int = exp(b_Intercept),
-         N_eff = exp(b_Intercept + b_N_added) - int,
-         amb_eff = exp(b_Intercept + b_soilambientN) - exp(b_Intercept),
-         PAV_eff = exp(b_Intercept + b_infectionPAVinfection) - exp(b_Intercept),
-         RPV_eff = exp(b_Intercept + b_infectionRPVinfection) - exp(b_Intercept),
-         N_eff_amb = exp(b_Intercept + b_soilambientN + b_N_added) - exp(b_Intercept + b_soilambientN)) %>%
-  select(int:N_eff_amb) %>%
-  pivot_longer(cols = int:N_eff_amb,
-               names_to = "treatment",
-               values_to = "biomass.g") %>%
-  group_by(treatment) %>%
-  mean_hdi(biomass.g))
-
-# all data model
-(bio_soil_samps <- posterior_samples(bio_soil_mod2) %>%
-    mutate(int = exp(b_Intercept),
-           N_eff = exp(b_Intercept + b_N_added) - int,
-           soil_eff = exp(b_Intercept + b_soil_N) - exp(b_Intercept),
-           PAV_eff = exp(b_Intercept + b_infectionPAVinfection) - exp(b_Intercept),
-           RPV_eff = exp(b_Intercept + b_infectionRPVinfection) - exp(b_Intercept)) %>%
-    select(int:RPV_eff) %>%
-    pivot_longer(cols = int:RPV_eff,
-                 names_to = "treatment",
-                 values_to = "biomass.g") %>%
-    group_by(treatment) %>%
-    mean_hdi(biomass.g))
-
+dat2 %>%
+  group_by(infection) %>%
+  count()
 
 
 #### output ####
-
-save(bio_mod2, file = "output/biomass_full_model_rounded_down.rda")
-save(bio_soil_mod2, file = "output/biomass_soil_model_rounded_down.rda")
+save(bio_mod6, file = "output/biomass_model_rounded_down.rda")
+write_csv(tidy(bio_mod6), "output/biomass_model_rounded_down.csv")
