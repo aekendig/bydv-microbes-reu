@@ -97,28 +97,28 @@ anova(bio_mod1, bio_mod2, test = "F") # yes
 # remove 2-way interactions?
 bio_mod3 <- update(bio_mod2, ~. -soil:N_added)
 summary(bio_mod3)
-anova(bio_mod2, bio_mod3, test = "Chi") # yes
+anova(bio_mod2, bio_mod3, test = "F") # yes
 
 bio_mod4 <- update(bio_mod3, ~. -N_added:infection)
 summary(bio_mod4)
-anova(bio_mod3, bio_mod4, test = "Chi") # yes
+anova(bio_mod3, bio_mod4, test = "F") # yes
 
 bio_mod5 <- update(bio_mod4, ~. -soil:infection)
 summary(bio_mod5)
-anova(bio_mod4, bio_mod5, test = "Chi") # yes
+anova(bio_mod4, bio_mod5, test = "F") # yes
 
 # remove main effects?
 bio_mod6 <- update(bio_mod5, ~. -soil)
 summary(bio_mod6)
-anova(bio_mod5, bio_mod6, test = "Chi") # yes
+anova(bio_mod5, bio_mod6, test = "F") # yes
 
 bio_mod7 <- update(bio_mod6, ~. -infection)
 summary(bio_mod7)
-anova(bio_mod6, bio_mod7, test = "Chi") # no
+anova(bio_mod6, bio_mod7, test = "F") # no
 
 bio_mod8 <- update(bio_mod6, ~. -N_added)
 summary(bio_mod8)
-anova(bio_mod6, bio_mod8, test = "Chi") # no
+anova(bio_mod6, bio_mod8, test = "F") # no
 
 
 #### biomass values ####

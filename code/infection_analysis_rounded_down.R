@@ -28,7 +28,9 @@ dat2 <- dat %>%
                                  disease == "Co" ~ "Co-inoculation",
                                  disease == "Healthy" ~ "Mock inoculation") %>%
            fct_relevel("Mock inoculation", "Single inoculation"),
-         nitrogen_added = fct_relevel(nitrogen_added, "low", "high"))
+         nitrogen_added = fct_relevel(nitrogen_added, "low", "high"),
+         coinfection = case_when(disease == "Co" & pav == 1 & rpv == 1 ~ 1,
+                                 TRUE ~ 0))
 
 # separate by virus
 pav_dat <- dat2 %>%
@@ -36,6 +38,9 @@ pav_dat <- dat2 %>%
 
 rpv_dat <- dat2 %>%
   filter(inoc_rpv == 1)
+
+co_dat <- dat2 %>%
+  filter(disease == "Co")
 
 # microbe comparison
 # pav_microbe_dat = filter(pav_dat, soil_N == 0)
@@ -214,9 +219,58 @@ rpv_dat %>%
   mutate(change = RPV - Co)
 
 
+#### coinfection model ####
+
+# full model
+co_mod1 <- glm(coinfection ~ soil * N_added, 
+                data = co_dat,
+                family = "binomial")
+summary(co_mod1)
+
+# remove 2-way interaction?
+co_mod2 <- update(co_mod1, ~. -soil:N_added)
+summary(co_mod2)
+anova(co_mod1, co_mod2, test = "Chi") # yes
+
+# remove main effects?
+co_mod3 <- update(co_mod2, ~. -soil)
+summary(co_mod3)
+anova(co_mod2, co_mod3, test = "Chi") # no
+
+co_mod4 <- update(co_mod2, ~. -N_added)
+summary(co_mod4)
+anova(co_mod2, co_mod4, test = "Chi") # no
+
+
+#### coinfection values ####
+
+co_dat %>%
+  filter(N_added == 0 & soil == "sterile") %>%
+  summarise(mean_co = mean(co),
+            se_co = sd(co)/sqrt(n()))
+
+co_dat %>%
+  group_by(soil) %>%
+  summarise(mean_co = mean(co)) %>%
+  filter(soil != "sterile") %>%
+  summarise(mean_change = mean(mean_co))
+
+co_dat %>%
+  group_by(N_added) %>%
+  summarise(mean_co = mean(co)) %>%
+  pivot_wider(names_from = N_added,
+              values_from = mean_co) %>%
+  rename("low" = "0",
+         "high" = "1") %>%
+  mutate(change = high - low)
+
+
+
 #### output ####
 save(pav_mod6, file = "output/pav_model_rounded_down.rda")
 save(rpv_mod6, file = "output/rpv_model_rounded_down.rda")
+save(co_mod2, file = "output/coinfection_model_rounded_down.rda")
 
 write_csv(tidy(pav_mod6), "output/pav_model_rounded_down.csv")
 write_csv(tidy(rpv_mod6), "output/rpv_model_rounded_down.csv")
+write_csv(tidy(co_mod2), "output/coinfection_model_rounded_down.csv")
