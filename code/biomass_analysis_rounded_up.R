@@ -1,6 +1,6 @@
 ##### info ####
 
-# goal: analyze biomass data when only PCR bands at least as intense as controls are counted as indicators of infection (rounding down)
+# goal: analyze biomass data any visible PCR band is counted as indicators of infection (rounding up)
 
 
 #### set-up ####
@@ -13,7 +13,7 @@ library(tidyverse)
 library(broom)
 
 # import data
-dat <- read_csv("intermediate-data/bydv_microbes_data_rounded_down.csv")
+dat <- read_csv("intermediate-data/bydv_microbes_data_rounded_up.csv")
 
 
 #### edit data ####
@@ -32,9 +32,12 @@ dat2 <- dat %>%
          log_biomass = log(biomass)) %>%
   filter(!is.na(infection))
 
-# remove coinfection for stats
-bio_dat <- dat2 %>%
-  filter(infection != "Co-infection")
+# replicates
+dat2 %>%
+  group_by(infection, N_added, soil) %>%
+  count() %>%
+  data.frame()
+# co-infection only has 1 rep for some treatments
 
 
 #### visualize ####
@@ -65,7 +68,7 @@ pan_lab <- tibble(infection = unique(dat2$infection),
          nitrogen_added = "low")
 
 # biomass figure
-pdf("output/biomass_figure_rounded_down.pdf", width = 6, height = 6)
+pdf("output/biomass_figure_rounded_up.pdf", width = 6, height = 6)
 ggplot(dat2, aes(soil, biomass, fill = nitrogen_added)) +
   stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.2)) +
   stat_summary(geom = "point", fun = "mean", size = 3, position = position_dodge(0.2), shape = 21) +
@@ -84,7 +87,7 @@ dev.off()
 
 # full model
 bio_mod1 <- lm(log_biomass ~ soil * N_added * infection,
-               data = bio_dat)
+               data = dat2)
 summary(bio_mod1)
 
 # remove 3-way interaction?
@@ -120,35 +123,27 @@ anova(bio_mod6, bio_mod8, test = "F") # no
 
 
 #### biomass values ####
-
-bio_dat %>%
-  filter(N_added == 0 & infection == "Mock inoculation") %>%
-  summarise(mean_bio = mean(biomass),
-            se_bio = sd(biomass)/sqrt(n()))
-
-bio_dat %>%
+dat2 %>%
   group_by(nitrogen_added) %>%
   summarise(mean_bio = mean(biomass)) %>%
   pivot_wider(names_from = "nitrogen_added",
               values_from = "mean_bio") %>%
   mutate(change = (high - low)/low)
 
-bio_dat %>%
+dat2 %>%
   group_by(infection) %>%
   summarise(mean_bio = mean(biomass)) %>%
   pivot_wider(names_from = "infection",
               values_from = "mean_bio") %>%
   rename("mock" = "Mock inoculation",
          "PAV" = "PAV infection",
-         "RPV" = "RPV infection") %>%
+         "RPV" = "RPV infection",
+         "Co" = "Co-infection") %>%
   mutate(PAV_change = (PAV - mock)/mock,
-         RPV_change = (RPV - mock)/mock)
-
-dat2 %>%
-  group_by(infection) %>%
-  count()
+         RPV_change = (RPV - mock)/mock,
+         co_change = (Co - mock)/mock)
 
 
 #### output ####
-save(bio_mod6, file = "output/biomass_model_rounded_down.rda")
-write_csv(tidy(bio_mod6), "output/biomass_model_rounded_down.csv")
+save(bio_mod6, file = "output/biomass_model_rounded_up.rda")
+write_csv(tidy(bio_mod6), "output/biomass_model_rounded_up.csv")

@@ -1,8 +1,6 @@
 ##### info ####
 
-# authors: Amy Kendig and Casey Easterday
-# date last edited: 10/13/20
-# goal: analyze data when including all visible PCR bands as indicators of infection (rounding up)
+# goal: analyze data when any visible PCR band is counted as indicators of infection (rounding up)
 
 
 #### set-up ####
@@ -12,8 +10,8 @@ rm(list = ls())
 
 # load packages
 library(tidyverse)
-library(MuMIn)
 library(cowplot)
+library(broom)
 
 # import data
 dat <- read_csv("intermediate-data/bydv_microbes_data_rounded_up.csv")
@@ -23,12 +21,14 @@ dat <- read_csv("intermediate-data/bydv_microbes_data_rounded_up.csv")
 
 # reorganize factor levels
 dat2 <- dat %>%
-  mutate(soil = fct_relevel(soil, "sterile", "low", "medium", "high"),
+  mutate(soil = fct_relevel(soil, "sterile", "ambient N", "low N"),
          inoculation = case_when(disease %in% c("PAV", "RPV") ~ "Single inoculation",
                                  disease == "Co" ~ "Co-inoculation",
                                  disease == "Healthy" ~ "Mock inoculation") %>%
            fct_relevel("Mock inoculation", "Single inoculation"),
-         nitrogen_added = fct_relevel(nitrogen_added, "low", "high"))
+         nitrogen_added = fct_relevel(nitrogen_added, "low", "high"),
+         coinfection = case_when(disease == "Co" & pav == 1 & rpv == 1 ~ 1,
+                                 TRUE ~ 0))
 
 # separate by virus
 pav_dat <- dat2 %>%
@@ -36,6 +36,9 @@ pav_dat <- dat2 %>%
 
 rpv_dat <- dat2 %>%
   filter(inoc_rpv == 1)
+
+co_dat <- dat2 %>%
+  filter(disease == "Co")
 
 
 #### visualize ####
@@ -78,14 +81,12 @@ pav_fig  <- ggplot(pav_dat, aes(soil, pav, fill = nitrogen_added, shape = inocul
   facet_wrap(~ inoculation) +
   scale_fill_manual(values = col_pal, name = "N supply") +
   scale_shape_manual(values = shape_pal, guide = F) +
-  guides(fill = guide_legend(override.aes = list(shape = 21))) +
+  guides(fill = guide_legend(override.aes = list(shape = 21), direction = "horizontal", title.position = "top")) +
   xlab("Field soil N treatment") +
-  ylab("PAV infection prevalence") +
+  ylab("PAV incidence") +
   theme_def +
-  theme(legend.position = c(0.4, 0.2),
+  theme(legend.position = c(0.13, 0.13),
         axis.title.x = element_blank())
-# adding microbes reduces PAV infection unless N is high (because N reduces infection) or microbes have long-term exposure to high N
-# adding microbes or N helps ameliorate negative effects of co-inoculation on PAV infection
 
 # RPV infection prevalence
 rpv_fig <- ggplot(rpv_dat, aes(soil, rpv, fill = nitrogen_added, shape = inoculation)) +
@@ -96,13 +97,11 @@ rpv_fig <- ggplot(rpv_dat, aes(soil, rpv, fill = nitrogen_added, shape = inocula
   scale_fill_manual(values = col_pal, name = "N supply") +
   scale_shape_manual(values = shape_pal, guide = F) +
   guides(fill = guide_legend(override.aes = list(shape = 21))) +
-  xlab("Field soil N treatment") +
-  ylab("RPV infection prevalence") +
+  xlab("Soil microbes") +
+  ylab("RPV incidence") +
   theme_def +
   theme(legend.position = "none",
         strip.text = element_blank())
-# adding microbes reduces RPV infection, especially when N is high (because N increases infection)
-# adding microbes or N helps ameliorate negative effects of co-inoculation on RPV infection
 
 # combine figures
 pdf("output/infection_figure_rounded_up.pdf", width = 6, height = 6)
@@ -113,37 +112,147 @@ dev.off()
 
 #### PAV model ####
 
-# initial fit
-pav_mod1 <- glm(pav ~ soil * N_added * inoc_rpv, data = pav_dat, 
-                family = binomial,
-                na.action = na.fail)
+# full model
+pav_mod1 <- glm(pav ~ soil * N_added * inoc_rpv, 
+                data = pav_dat,
+                family = "binomial")
 summary(pav_mod1)
-# no significant effects
-# many of the standard errors are the same because the intercept is only 1's
 
-# switch intercept
-# pav_mod2 <- glm(pav ~ soil * N_limit * inoc_rpv, data = pav_dat, 
-#                 family = binomial,
-#                 na.action = na.fail)
-# summary(pav_mod2)
+# remove 3-way interaction?
+pav_mod2 <- update(pav_mod1, ~. -soil:N_added:inoc_rpv)
+summary(pav_mod2)
+anova(pav_mod1, pav_mod2, test = "Chi") # yes
 
-# model average using AIC
-pav_mod_avg <- model.avg(dredge(pav_mod1), cumsum(weight) <= 0.95)
-summary(pav_mod_avg)
-# component model results are the same whether model 1 or 2 is used
-# summed weight is 1 -- because you have to include two 0.02 weighted models to get to 0.95?
-# copied and pasted output to Excel
+# remove 2-way interactions?
+pav_mod3 <- update(pav_mod2, ~. -N_added:inoc_rpv)
+summary(pav_mod3)
+anova(pav_mod2, pav_mod3, test = "Chi") # no
+
+pav_mod4 <- update(pav_mod2, ~. -soil:N_added)
+summary(pav_mod4)
+anova(pav_mod2, pav_mod4, test = "Chi") # yes
+
+pav_mod5 <- update(pav_mod4, ~. -soil:inoc_rpv)
+summary(pav_mod5)
+anova(pav_mod4, pav_mod5, test = "Chi") # no
+
+
+#### PAV values ####
+
+pav_dat %>%
+  group_by(N_added, disease) %>%
+  summarise(mean_pav = mean(pav)) %>%
+  pivot_wider(names_from = disease,
+              values_from = mean_pav) %>%
+  mutate(change = PAV - Co)
+  
 
 
 #### RPV model ####
 
-# initial fit
-rpv_mod1 <- glm(rpv ~ soil * N_added * inoc_pav, data = rpv_dat, 
-                family = binomial,
-                na.action = na.fail)
+# full model
+rpv_mod1 <- glm(rpv ~ soil * N_added * inoc_pav, 
+                data = rpv_dat,
+                family = "binomial")
 summary(rpv_mod1)
 
-# model average using AIC
-rpv_mod_avg <- model.avg(dredge(rpv_mod1), subset = cumsum(weight) <= .95)
-summary(rpv_mod_avg)
-# copied and pasted output to Excel
+# remove 3-way interaction?
+rpv_mod2 <- update(rpv_mod1, ~. -soil:N_added:inoc_pav)
+summary(rpv_mod2)
+anova(rpv_mod1, rpv_mod2, test = "Chi") # yes
+
+# remove 2-way interactions?
+rpv_mod3 <- update(rpv_mod2, ~. -N_added:inoc_pav)
+summary(rpv_mod3)
+anova(rpv_mod2, rpv_mod3, test = "Chi") # yes
+
+rpv_mod4 <- update(rpv_mod3, ~. -soil:N_added)
+summary(rpv_mod4)
+anova(rpv_mod3, rpv_mod4, test = "Chi") # yes
+
+rpv_mod5 <- update(rpv_mod4, ~. -soil:inoc_pav)
+summary(rpv_mod5)
+anova(rpv_mod4, rpv_mod5, test = "Chi") # yes
+
+# remove main effects?
+rpv_mod6 <- update(rpv_mod5, ~. -soil)
+summary(rpv_mod6)
+anova(rpv_mod5, rpv_mod6, test = "Chi") # yes
+
+rpv_mod7 <- update(rpv_mod6, ~. -N_added)
+summary(rpv_mod7)
+anova(rpv_mod6, rpv_mod7, test = "Chi") # yes
+
+rpv_mod8 <- update(rpv_mod7, ~. -inoc_pav)
+summary(rpv_mod8)
+anova(rpv_mod7, rpv_mod8, test = "Chi") # no
+
+
+#### RPV values ####
+
+rpv_dat %>%
+  group_by(disease) %>%
+  summarise(mean_rpv = mean(rpv)) %>%
+  pivot_wider(names_from = disease,
+              values_from = mean_rpv) %>%
+  mutate(change = RPV - Co)
+
+
+#### coinfection model ####
+
+# full model
+co_mod1 <- glm(coinfection ~ soil * N_added, 
+                data = co_dat,
+                family = "binomial")
+summary(co_mod1)
+
+# remove 2-way interaction?
+co_mod2 <- update(co_mod1, ~. -soil:N_added)
+summary(co_mod2)
+anova(co_mod1, co_mod2, test = "Chi") # yes
+
+# remove main effects?
+co_mod3 <- update(co_mod2, ~. -soil)
+summary(co_mod3)
+anova(co_mod2, co_mod3, test = "Chi") # yes
+
+co_mod4 <- update(co_mod3, ~. -N_added)
+summary(co_mod4)
+anova(co_mod3, co_mod4, test = "Chi") # no
+
+
+#### coinfection values ####
+
+co_dat %>%
+  group_by(soil) %>%
+  summarise(mean_co = mean(co)) %>%
+  pivot_wider(names_from = soil,
+              values_from = mean_co) %>%
+  rename("ambient" = "ambient N",
+         "low" = "low N",
+         "high" = "high N") %>%
+  transmute(a_change = ambient - sterile,
+            l_change = low - sterile,
+            h_change = high - sterile) %>%
+  pivot_longer(everything()) %>%
+  summarise(mean_change = mean(value))
+
+co_dat %>%
+  group_by(N_added) %>%
+  summarise(mean_co = mean(co)) %>%
+  pivot_wider(names_from = N_added,
+              values_from = mean_co) %>%
+  rename("low" = "0",
+         "high" = "1") %>%
+  mutate(change = high - low)
+
+
+
+#### output ####
+save(pav_mod4, file = "output/pav_model_rounded_up.rda")
+save(rpv_mod7, file = "output/rpv_model_rounded_up.rda")
+save(co_mod3, file = "output/coinfection_model_rounded_up.rda")
+
+write_csv(tidy(pav_mod4), "output/pav_model_rounded_up.csv")
+write_csv(tidy(rpv_mod7), "output/rpv_model_rounded_up.csv")
+write_csv(tidy(co_mod3), "output/coinfection_model_rounded_up.csv")

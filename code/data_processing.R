@@ -1,7 +1,5 @@
 ##### info ####
 
-# authors: Amy Kendig and Casey Easterday
-# date last edited: 10/8/20
 # goal: prepare data for statistical analyses
 
 

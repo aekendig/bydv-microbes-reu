@@ -1,7 +1,6 @@
 ##### info ####
 
 # authors: Amy Kendig and Casey Easterday
-# date last edited: 10/14/20
 # goal: analyze data when only PCR bands at least as intense as controls are counted as indicators of infection (rounding down)
 
 
@@ -41,14 +40,6 @@ rpv_dat <- dat2 %>%
 
 co_dat <- dat2 %>%
   filter(disease == "Co")
-
-# microbe comparison
-# pav_microbe_dat = filter(pav_dat, soil_N == 0)
-# rpv_microbe_dat = filter(rpv_dat, soil_N == 0)
-# 
-# # soil N comparison
-# pav_soil_dat = filter(pav_dat, microbes == 1)
-# rpv_soil_dat = filter(rpv_dat, microbes == 1)
 
 
 #### visualize ####
@@ -97,8 +88,6 @@ pav_fig  <- ggplot(pav_dat, aes(soil, pav, fill = nitrogen_added, shape = inocul
   theme_def +
   theme(legend.position = c(0.13, 0.13),
         axis.title.x = element_blank())
-# N reduces PAV unless microbes are added
-# coinfection reduces PAV unless microbes are added
 
 # RPV infection prevalence
 rpv_fig <- ggplot(rpv_dat, aes(soil, rpv, fill = nitrogen_added, shape = inoculation)) +
@@ -114,8 +103,6 @@ rpv_fig <- ggplot(rpv_dat, aes(soil, rpv, fill = nitrogen_added, shape = inocula
   theme_def +
   theme(legend.position = "none",
         strip.text = element_blank())
-# coinfection reduces RPV unless microbes are added
-
 
 # combine figures
 pdf("output/infection_figure_rounded_down.pdf", width = 6, height = 6)
