@@ -61,7 +61,6 @@ theme_def <- theme_bw() +
 
 # palettes
 col_pal = c("white", "black")
-shape_pal = c(21, 22)
 
 # panel labels
 pav_lab <- tibble(inoculation = c("Single inoculation", "Co-inoculation") %>% fct_relevel("Single inoculation"),
@@ -75,14 +74,13 @@ rpv_lab <- pav_lab %>%
          rpv = 1)
 
 # PAV infection prevalence
-pav_fig  <- ggplot(pav_dat, aes(soil, pav, fill = nitrogen_added, shape = inoculation)) +
+pav_fig  <- ggplot(pav_dat, aes(soil, pav, fill = nitrogen_added)) +
   stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.2)) +
-  stat_summary(geom = "point", fun = "mean", size = 3, position = position_dodge(0.2)) +
+  stat_summary(geom = "point", fun = "mean", size = 3, position = position_dodge(0.2), shape = 21) +
   geom_text(data = pav_lab, aes(label = label), nudge_x = -0.4) +
   facet_wrap(~ inoculation) +
   scale_fill_manual(values = col_pal, name = "N supply") +
-  scale_shape_manual(values = shape_pal, guide = F) +
-  guides(fill = guide_legend(override.aes = list(shape = 21), direction = "horizontal", title.position = "top")) +
+  guides(fill = guide_legend(direction = "horizontal", title.position = "top")) +
   xlab("Field soil N treatment") +
   ylab("PAV incidence") +
   theme_def +
@@ -90,14 +88,12 @@ pav_fig  <- ggplot(pav_dat, aes(soil, pav, fill = nitrogen_added, shape = inocul
         axis.title.x = element_blank())
 
 # RPV infection prevalence
-rpv_fig <- ggplot(rpv_dat, aes(soil, rpv, fill = nitrogen_added, shape = inoculation)) +
+rpv_fig <- ggplot(rpv_dat, aes(soil, rpv, fill = nitrogen_added)) +
   stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.2)) +
-  stat_summary(geom = "point", fun = "mean", size = 3, position = position_dodge(0.2)) +
+  stat_summary(geom = "point", fun = "mean", size = 3, position = position_dodge(0.2), shape = 21) +
   geom_text(data = rpv_lab, aes(label = label), nudge_x = -0.4) +
   facet_wrap(~ inoculation) +
   scale_fill_manual(values = col_pal, name = "N supply") +
-  scale_shape_manual(values = shape_pal, guide = F) +
-  guides(fill = guide_legend(override.aes = list(shape = 21))) +
   xlab("Soil microbes") +
   ylab("RPV incidence") +
   theme_def +

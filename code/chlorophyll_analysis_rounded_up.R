@@ -64,10 +64,11 @@ theme_def <- theme_bw() +
 col_pal = c("white", "black")
 
 # panel labels
-pan_lab <- tibble(infection = unique(dat2$infection),
+pan_lab <- tibble(infection =levels(dat2$infection) %>%
+                    fct_relevel("Mock inoculation", "PAV infection", "RPV infection"),
                   label = c("(a)", "(b)", "(c)", "(d)")) %>%
   mutate(soil = "sterile",
-         chlorophyll = 33,
+         chlorophyll = 32,
          nitrogen_added = "low")
 
 # chlorophyll figure
@@ -80,7 +81,7 @@ ggplot(dat2, aes(soil, chlorophyll, fill = nitrogen_added)) +
   scale_fill_manual(values = col_pal, name = "N supply") +
   guides(fill = guide_legend(override.aes = list(shape = 21), direction = "horizontal", title.position = "top")) +
   xlab("Field soil N treatment") +
-  ylab("Chlorophyll (SPAD units)") +
+  ylab("Leaf chlorophyll content (SPAD)") +
   theme_def +
   theme(legend.position = c(0.15, 0.6))
 dev.off()

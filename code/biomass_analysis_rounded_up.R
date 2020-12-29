@@ -61,7 +61,8 @@ theme_def <- theme_bw() +
 col_pal = c("white", "black")
 
 # panel labels
-pan_lab <- tibble(infection = unique(dat2$infection),
+pan_lab <- tibble(infection =levels(dat2$infection) %>%
+                    fct_relevel("Mock inoculation", "PAV infection", "RPV infection"),
                   label = c("(a)", "(b)", "(c)", "(d)")) %>%
   mutate(soil = "sterile",
          biomass = 0.65,

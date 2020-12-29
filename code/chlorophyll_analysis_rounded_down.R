@@ -84,7 +84,7 @@ ggplot(dat2, aes(soil, chlorophyll, fill = nitrogen_added)) +
   scale_fill_manual(values = col_pal, name = "N supply") +
   guides(fill = guide_legend(override.aes = list(shape = 21), direction = "horizontal", title.position = "top")) +
   xlab("Field soil N treatment") +
-  ylab("Chlorophyll (SPAD units)") +
+  ylab("Leaf chlorophyll content (SPAD)") +
   theme_def +
   theme(legend.position = c(0.15, 0.6))
 dev.off()
@@ -123,6 +123,13 @@ anova(clr_mod4, clr_mod6, test = "F") # no
 
 #### chlorophyll values ####
 clr_dat %>%
+  filter(soil == "sterile" & 
+           nitrogen_added == "low" & 
+           infection == "Mock inoculation") %>%
+  summarise(mean_chlr = mean(chlorophyll),
+            se_chlr = sd(chlorophyll)/n())
+
+clr_dat %>%
   group_by(soil, nitrogen_added) %>%
   summarise(mean_chlr = mean(chlorophyll)) %>%
   pivot_wider(names_from = "nitrogen_added",
@@ -154,5 +161,5 @@ clr_dat %>%
 
 
 #### output ####
-save(clr_mod6, file = "output/chlorophyll_model_rounded_down.rda")
-write_csv(tidy(clr_mod6), "output/chlorophyll_model_rounded_down.csv")
+save(clr_mod4, file = "output/chlorophyll_model_rounded_down.rda")
+write_csv(tidy(clr_mod4), "output/chlorophyll_model_rounded_down.csv")
