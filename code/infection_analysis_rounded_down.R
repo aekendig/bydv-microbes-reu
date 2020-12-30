@@ -1,6 +1,5 @@
 ##### info ####
 
-# authors: Amy Kendig and Casey Easterday
 # goal: analyze data when only PCR bands at least as intense as controls are counted as indicators of infection (rounding down)
 
 
@@ -223,6 +222,33 @@ anova(co_mod2, co_mod3, test = "Chi") # no
 co_mod4 <- update(co_mod2, ~. -N_added)
 summary(co_mod4)
 anova(co_mod2, co_mod4, test = "Chi") # no
+
+# high standard errors due to no cases at intercept
+# alternative test
+
+# switch factor levels
+co_dat2 <- co_dat %>%
+  mutate(soil = fct_rev(soil))
+
+# full model
+co_mod5 <- glm(coinfection ~ soil * N_limit, 
+               data = co_dat2,
+               family = "binomial")
+summary(co_mod5) # still has some high SE values
+
+# remove 2-way interaction?
+co_mod6 <- update(co_mod5, ~. -soil:N_limit)
+summary(co_mod6)
+anova(co_mod5, co_mod6, test = "Chi") # yes
+
+# remove main effects?
+co_mod7 <- update(co_mod6, ~. -soil)
+summary(co_mod7)
+anova(co_mod6, co_mod7, test = "Chi") # no
+
+co_mod8 <- update(co_mod6, ~. -N_limit)
+summary(co_mod8)
+anova(co_mod6, co_mod8, test = "Chi") # no
 
 
 #### coinfection values ####
