@@ -76,12 +76,12 @@ pdf("output/chlorophyll_figure_rounded_up.pdf", width = 6, height = 6)
 ggplot(dat2, aes(soil, chlorophyll, fill = nitrogen_added)) +
   stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.2)) +
   stat_summary(geom = "point", fun = "mean", size = 3, position = position_dodge(0.2), shape = 21) +
-  geom_text(data = pan_lab, aes(label = label), nudge_x = -0.4) +
+  geom_text(data = pan_lab, aes(label = label), nudge_x = -0.4, fontface = "bold") +
   facet_wrap(~ infection) +
   scale_fill_manual(values = col_pal, name = "N supply") +
   guides(fill = guide_legend(override.aes = list(shape = 21), direction = "horizontal", title.position = "top")) +
   xlab("Field soil N treatment") +
-  ylab("Leaf chlorophyll content (SPAD)") +
+  ylab("Leaf chlorophyll content [SPAD]") +
   theme_def +
   theme(legend.position = c(0.15, 0.6))
 dev.off()

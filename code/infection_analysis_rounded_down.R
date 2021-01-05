@@ -68,15 +68,17 @@ pav_lab <- tibble(inoculation = c("Single inoculation", "Co-inoculation") %>% fc
          pav = 1,
          nitrogen_added = "low")
 
-rpv_lab <- pav_lab %>%
-  mutate(label = recode(label, "(a)" = "(c)", "(b)" = "(d)"),
-         rpv = 1)
+rpv_lab <- tibble(inoculation = c("Single inoculation", "Co-inoculation") %>% fct_relevel("Single inoculation"),
+                  label = c("(c)", "(d)")) %>%
+  mutate(soil = "sterile",
+         rpv = 1,
+         nitrogen_added = "low")
 
 # PAV infection prevalence
 pav_fig  <- ggplot(pav_dat, aes(soil, pav, fill = nitrogen_added)) +
   stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.2)) +
   stat_summary(geom = "point", fun = "mean", size = 3, position = position_dodge(0.2), shape = 21) +
-  geom_text(data = pav_lab, aes(label = label), nudge_x = -0.4) +
+  geom_text(data = pav_lab, aes(label = label), nudge_x = -0.4, fontface = "bold") +
   facet_wrap(~ inoculation) +
   scale_fill_manual(values = col_pal, name = "N supply") +
   guides(fill = guide_legend(direction = "horizontal", title.position = "top")) +
@@ -90,7 +92,7 @@ pav_fig  <- ggplot(pav_dat, aes(soil, pav, fill = nitrogen_added)) +
 rpv_fig <- ggplot(rpv_dat, aes(soil, rpv, fill = nitrogen_added)) +
   stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.2)) +
   stat_summary(geom = "point", fun = "mean", size = 3, position = position_dodge(0.2), shape = 21) +
-  geom_text(data = rpv_lab, aes(label = label), nudge_x = -0.4) +
+  geom_text(data = rpv_lab, aes(label = label), nudge_x = -0.4, fontface = "bold") +
   facet_wrap(~ inoculation) +
   scale_fill_manual(values = col_pal, name = "N supply") +
   xlab("Soil microbes") +
