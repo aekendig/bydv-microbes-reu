@@ -44,6 +44,17 @@ unique(dat2$pav)
 unique(dat2$rpv)
 # half values when bands were visible, but not as strong as the controls
 
+# unintended inoculations
+dat2 %>%
+  filter(inoc_pav == 0 & pav %in% c(0.5, 1)) %>%
+  group_by(disease, pav) %>%
+  count()
+
+dat2 %>%
+  filter(inoc_rpv == 0 & rpv %in% c(0.5, 1)) %>%
+  group_by(disease, rpv) %>%
+  count()
+
 # round half values up
 # remove contaminated samples
 dat_up <- dat2 %>%
@@ -61,6 +72,21 @@ dat_dn <- dat2 %>%
          co = ifelse(pav == 1 & rpv == 1, 1, 0)) %>%
   filter(!(inoc_rpv == 0 & rpv == 1) & !(inoc_pav == 0 & pav == 1))
 # 7 samples contaminated
+
+# sample sizes
+dat_up %>%
+  group_by(disease, soil, N_added) %>%
+  count() %>%
+  ungroup() %>%
+  summarise(min = min(n),
+            max = max(n))
+
+dat_dn %>%
+  group_by(disease, soil, N_added) %>%
+  count() %>%
+  ungroup() %>%
+  summarise(min = min(n),
+            max = max(n))
 
 
 #### output ####
