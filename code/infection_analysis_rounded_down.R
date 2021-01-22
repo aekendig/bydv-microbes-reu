@@ -28,7 +28,14 @@ dat2 <- dat %>%
            fct_relevel("Mock inoculation", "Single inoculation"),
          nitrogen_added = fct_relevel(nitrogen_added, "low", "high"),
          coinfection = case_when(disease == "Co" & pav == 1 & rpv == 1 ~ 1,
-                                 TRUE ~ 0))
+                                 TRUE ~ 0),
+         microbes = ifelse(soil == "sterile", 0, 1))
+
+# reset soil contrasts
+#                        	      S   A   L   H
+contrasts(dat2$soil) <- cbind(c(-3,  1,  1,  1), # sterile vs others
+                              c(0,  -2,  1,	0), # ambient vs. N fert   
+                              c(0,  0,  -1,	1)) # low vs. high
 
 # separate by virus
 pav_dat <- dat2 %>%
@@ -148,7 +155,7 @@ pav_dat %>%
             se_pav = sd(pav)/sqrt(n()))
 
 pav_dat %>%
-  group_by(soil, disease) %>%
+  group_by(microbes, disease) %>%
   summarise(mean_pav = mean(pav)) %>%
   pivot_wider(names_from = disease,
               values_from = mean_pav) %>%
@@ -285,3 +292,7 @@ save(co_mod2, file = "output/coinfection_model_rounded_down.rda")
 write_csv(tidy(pav_mod6), "output/pav_model_rounded_down.csv")
 write_csv(tidy(rpv_mod6), "output/rpv_model_rounded_down.csv")
 write_csv(tidy(co_mod2), "output/coinfection_model_rounded_down.csv")
+
+write_csv(tidy(pav_mod1), "output/full_pav_model_rounded_down.csv")
+write_csv(tidy(rpv_mod1), "output/full_rpv_model_rounded_down.csv")
+write_csv(tidy(co_mod1), "output/full_coinfection_model_rounded_down.csv")
