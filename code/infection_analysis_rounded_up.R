@@ -28,7 +28,28 @@ dat2 <- dat %>%
            fct_relevel("Mock inoculation", "Single inoculation"),
          nitrogen_added = fct_relevel(nitrogen_added, "low", "high"),
          coinfection = case_when(disease == "Co" & pav == 1 & rpv == 1 ~ 1,
-                                 TRUE ~ 0))
+                                 TRUE ~ 0),
+         microbes = ifelse(soil == "sterile", 0, 1),
+         soil_N_added = ifelse(soil %in% c("sterile", "ambient N"), 0, 1),
+         soil_high_N = ifelse(soil == "high N", 1, 0))
+
+# reset soil contrasts (Helmert coding)
+# https://stats.idre.ucla.edu/r/library/r-library-contrast-coding-systems-for-categorical-variables/#User
+# https://rstudio-pubs-static.s3.amazonaws.com/65059_586f394d8eb84f84b1baaf56ffb6b47f.html
+#                          S   A   L   H
+contrast_mat <- matrix(c(1/4, 1/4, 1/4, 1/4, # intercept
+                         3/4, -1/4, -1/4, -1/4, # sterile vs others
+                         0,  2/3, -1/3, -1/3, # ambient vs. N fert   
+                         0,  0,  1/2,	-1/2), # low vs. high
+                       ncol = 4)
+
+# contrast_tmat <- solve(t(contrast_mat)) # inverse of transposed matrix (for user-defined)
+
+# cor(contrast_tmat[, 2:4]) # test orthogonality
+cor(contrast_mat[, 2:4])
+
+contrasts(dat2$soil) <- contrast_mat[, 2:4]
+# note that contr.helmert is reverse Helmert coding according to the ucla reference
 
 # separate by virus
 pav_dat <- dat2 %>%
@@ -39,6 +60,15 @@ rpv_dat <- dat2 %>%
 
 co_dat <- dat2 %>%
   filter(disease == "Co")
+
+# sample sizes
+pav_dat %>%
+  group_by(soil, N_added, disease) %>%
+  count()
+
+rpv_dat %>%
+  group_by(soil, N_added, disease) %>%
+  count()
 
 
 #### visualize ####
@@ -117,32 +147,93 @@ summary(pav_mod1)
 
 # remove 3-way interaction?
 pav_mod2 <- update(pav_mod1, ~. -soil:N_added:inoc_rpv)
-summary(pav_mod2)
 anova(pav_mod1, pav_mod2, test = "Chi") # yes
+summary(pav_mod2)
 
 # remove 2-way interactions?
-pav_mod3 <- update(pav_mod2, ~. -N_added:inoc_rpv)
-summary(pav_mod3)
+pav_mod3 <- update(pav_mod2, ~. -soil:inoc_rpv)
 anova(pav_mod2, pav_mod3, test = "Chi") # no
 
 pav_mod4 <- update(pav_mod2, ~. -soil:N_added)
-summary(pav_mod4)
 anova(pav_mod2, pav_mod4, test = "Chi") # yes
+summary(pav_mod4)
 
 pav_mod5 <- update(pav_mod4, ~. -soil:inoc_rpv)
-summary(pav_mod5)
 anova(pav_mod4, pav_mod5, test = "Chi") # no
+
+pav_mod6 <- update(pav_mod4, ~. -N_added:inoc_rpv)
+anova(pav_mod4, pav_mod6, test = "Chi") # yes
+summary(pav_mod6)
+
+pav_mod7 <- update(pav_mod6, ~. -soil:inoc_rpv)
+anova(pav_mod6, pav_mod7, test = "Chi") # no
+
+# remove main effects?
+pav_mod8 <- update(pav_mod6, ~. -N_added)
+anova(pav_mod6, pav_mod8, test = "Chi") # yes
+summary(pav_mod8)
+
+# check interaction again
+pav_mod9 <- update(pav_mod8, ~. -soil:inoc_rpv)
+anova(pav_mod8, pav_mod9, test = "Chi") # no
+
+# final model
+summary(pav_mod8)
 
 
 #### PAV values ####
 
 pav_dat %>%
-  group_by(N_added, disease) %>%
+  group_by(soil, disease) %>%
   summarise(mean_pav = mean(pav)) %>%
   pivot_wider(names_from = disease,
               values_from = mean_pav) %>%
   mutate(change = PAV - Co)
-  
+
+pav_dat %>%
+  group_by(soil, disease) %>%
+  summarise(mean_pav = mean(pav)) %>%
+  ungroup() %>%
+  mutate(logit = log(mean_pav/(1-mean_pav)))
+
+
+#### PAV microbe model ####
+
+# full model
+pav_mic_mod1 <- glm(pav ~ microbes * N_added * inoc_rpv, 
+                    data = pav_dat,
+                    family = "binomial")
+
+summary(pav_mic_mod1)
+
+# remove 3-way interaction?
+pav_mic_mod2 <- update(pav_mic_mod1, ~. -microbes:N_added:inoc_rpv)
+anova(pav_mic_mod1, pav_mic_mod2, test = "Chi") # yes
+summary(pav_mic_mod2)
+
+# remove 2-way interactions?
+pav_mic_mod3 <- update(pav_mic_mod2, ~. -N_added:inoc_rpv)
+anova(pav_mic_mod2, pav_mic_mod3, test = "Chi") # yes
+summary(pav_mic_mod3)
+
+pav_mic_mod4 <- update(pav_mic_mod3, ~. -microbes:N_added)
+anova(pav_mic_mod3, pav_mic_mod4, test = "Chi") # yes
+summary(pav_mic_mod4)
+
+pav_mic_mod5 <- update(pav_mic_mod4, ~. -microbes:inoc_rpv)
+anova(pav_mic_mod4, pav_mic_mod5, test = "Chi") # no
+
+# remove main effects?
+pav_mic_mod6 <- update(pav_mic_mod4, ~. -N_added)
+anova(pav_mic_mod4, pav_mic_mod6, test = "Chi") # yes
+summary(pav_mic_mod6)
+
+# re-test two-way interaction
+pav_mic_mod7 <- update(pav_mic_mod6, ~. -microbes:inoc_rpv)
+anova(pav_mic_mod6, pav_mic_mod7, test = "Chi") # no
+
+# final model
+summary(pav_mic_mod6)
 
 
 #### RPV model ####
@@ -155,34 +246,34 @@ summary(rpv_mod1)
 
 # remove 3-way interaction?
 rpv_mod2 <- update(rpv_mod1, ~. -soil:N_added:inoc_pav)
-summary(rpv_mod2)
 anova(rpv_mod1, rpv_mod2, test = "Chi") # yes
+summary(rpv_mod2)
 
 # remove 2-way interactions?
 rpv_mod3 <- update(rpv_mod2, ~. -N_added:inoc_pav)
-summary(rpv_mod3)
 anova(rpv_mod2, rpv_mod3, test = "Chi") # yes
+summary(rpv_mod3)
 
 rpv_mod4 <- update(rpv_mod3, ~. -soil:N_added)
-summary(rpv_mod4)
 anova(rpv_mod3, rpv_mod4, test = "Chi") # yes
+summary(rpv_mod4)
 
 rpv_mod5 <- update(rpv_mod4, ~. -soil:inoc_pav)
-summary(rpv_mod5)
 anova(rpv_mod4, rpv_mod5, test = "Chi") # yes
+summary(rpv_mod5)
 
 # remove main effects?
 rpv_mod6 <- update(rpv_mod5, ~. -soil)
-summary(rpv_mod6)
 anova(rpv_mod5, rpv_mod6, test = "Chi") # yes
+summary(rpv_mod6)
 
 rpv_mod7 <- update(rpv_mod6, ~. -N_added)
-summary(rpv_mod7)
 anova(rpv_mod6, rpv_mod7, test = "Chi") # yes
+summary(rpv_mod7)
 
 rpv_mod8 <- update(rpv_mod7, ~. -inoc_pav)
-summary(rpv_mod8)
 anova(rpv_mod7, rpv_mod8, test = "Chi") # no
+summary(rpv_mod8)
 
 
 #### RPV values ####

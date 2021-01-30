@@ -47,6 +47,15 @@ rpv_dat <- dat2 %>%
 co_dat <- dat2 %>%
   filter(disease == "Co")
 
+# sample sizes
+pav_dat %>%
+  group_by(soil, N_added, disease) %>%
+  count()
+
+rpv_dat %>%
+  group_by(soil, N_added, disease) %>%
+  count()
+
 
 #### visualize ####
 
