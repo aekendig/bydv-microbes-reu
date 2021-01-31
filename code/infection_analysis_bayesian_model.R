@@ -30,7 +30,9 @@ dat2 <- dat %>%
          nitrogen_added = fct_relevel(nitrogen_added, "low", "high"),
          coinfection = case_when(disease == "Co" & pav == 1 & rpv == 1 ~ 1,
                                  TRUE ~ 0),
-         microbes = ifelse(soil == "sterile", 0, 1))
+         microbes = ifelse(soil == "sterile", 0, 1),
+         microbes_f = ifelse(microbes == 0, "sterile", "microbes") %>%
+           fct_relevel("sterile"))
 
 # separate by virus
 pav_dat <- dat2 %>%
@@ -66,7 +68,7 @@ col_pal = c("white", "black")
 # panel labels
 pav_lab <- tibble(inoculation = c("Single inoculation", "Co-inoculation") %>% fct_relevel("Single inoculation"),
                   label = c("(a)", "(b)")) %>%
-  mutate(soil = "sterile",
+  mutate(microbes_f = "sterile",
          pav = 1,
          nitrogen_added = "low")
 
@@ -75,35 +77,35 @@ rpv_lab <- pav_lab %>%
          rpv = 1)
 
 # PAV infection prevalence
-pav_fig  <- ggplot(pav_dat, aes(soil, pav, fill = nitrogen_added)) +
+pav_fig  <- ggplot(pav_dat, aes(microbes_f, pav, fill = nitrogen_added)) +
   stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.2)) +
   stat_summary(geom = "point", fun = "mean", size = 3, position = position_dodge(0.2), shape = 21) +
   geom_text(data = pav_lab, aes(label = label), nudge_x = -0.4, fontface = "bold") +
   facet_wrap(~ inoculation) +
   scale_fill_manual(values = col_pal, name = "N supply") +
-  guides(fill = guide_legend(direction = "horizontal", title.position = "top")) +
-  xlab("Field soil N treatment") +
+  xlab("Microbe inoculation") +
   ylab("PAV incidence") +
   theme_def +
-  theme(legend.position = c(0.87, 0.13),
-        axis.title.x = element_blank(),
-        legend.margin = margin(0, 0, 0, 0))
+  theme(legend.position = "none",
+        axis.title.x = element_blank())
 
 # RPV infection prevalence
-rpv_fig <- ggplot(rpv_dat, aes(soil, rpv, fill = nitrogen_added)) +
+rpv_fig <- ggplot(rpv_dat, aes(microbes_f, rpv, fill = nitrogen_added)) +
   stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.2)) +
   stat_summary(geom = "point", fun = "mean", size = 3, position = position_dodge(0.2), shape = 21) +
   geom_text(data = rpv_lab, aes(label = label), nudge_x = -0.4, fontface = "bold") +
   facet_wrap(~ inoculation) +
   scale_fill_manual(values = col_pal, name = "N supply") +
-  xlab("Soil microbes") +
+  guides(fill = guide_legend(direction = "horizontal", title.position = "top")) +
+  xlab("Microbe inoculation") +
   ylab("RPV incidence") +
   theme_def +
-  theme(legend.position = "none",
-        strip.text = element_blank())
+  theme(legend.position = c(0.13, 0.13),
+        strip.text = element_blank(),
+        legend.margin = margin(0, 0, 0, 0))
 
 # combine figures
-pdf("output/infection_figure_rounded_up.pdf", width = 6, height = 6)
+pdf("output/infection_figure_microbes.pdf", width = 5, height = 5)
 plot_grid(pav_fig, rpv_fig,
           nrow = 2)
 dev.off()
@@ -215,9 +217,39 @@ summary(co_mod1)
 
 # increase chains
 co_mod2 <- update(co_mod1, chains = 3)
+
+# check model
 summary(co_mod2)
 plot(co_mod2)
 pp_check(co_mod2, nsamples = 50)
+
+# microbes model
+co_mic_mod1 <- update(co_mod2,
+                      newdata = co_dat,
+                      formula = coinfection ~ microbes * N_added,
+                      prior = c(prior(normal(0, 10), class = Intercept),
+                                prior(normal(0, 10), class = b)))
+
+# check model
+summary(co_mic_mod1)
+plot(co_mic_mod1)
+pp_check(co_mic_mod1, nsamples = 50)
+
+# compare with loo
+co_loo2 <- loo(co_mod2, reloo = T)
+co_loo2 
+# all k < 0.7 and elpd_loo <= 0.1
+# elpd_loo > 0.1, but still small compared to other SE
+# good model fit
+# reasonable to do model comparison
+co_mic_loo1 <- loo(co_mic_mod1, reloo = T)
+co_mic_loo1 
+# all k < 0.7
+# elpd_loo > 0.1, but still small compared to other SE
+# good model fit
+# reasonable to do model comparison
+loo_compare(co_loo2, co_mic_loo1)
+# microbes model is preferred
 
 
 #### output ####
@@ -225,8 +257,12 @@ save(pav_mod2, file = "output/pav_bayesian_model_soil.rda")
 save(pav_mic_mod1, file = "output/pav_bayesian_model_microbes.rda")
 save(rpv_mod2, file = "output/rpv_bayesian_model_soil.rda")
 save(rpv_mic_mod1, file = "output/rpv_bayesian_model_microbes.rda")
+save(co_mod2, file = "output/co_bayesian_model_soil.rda")
+save(co_mic_mod1, file = "output/co_bayesian_model_microbes.rda")
 
-write_csv(tidy(pav_mod2), "output/pav_bayesian_model_soil.csv")
-write_csv(tidy(pav_mic_mod1), "output/pav_bayesian_model_microbes.csv")
-write_csv(tidy(rpv_mod2), "output/rpv_bayesian_model_soil.csv")
-write_csv(tidy(rpv_mic_mod1), "output/rpv_bayesian_model_microbes.csv")
+write_csv(tidy(summary(pav_mod2)$fixed), "output/pav_bayesian_model_soil.csv")
+write_csv(tidy(summary(pav_mic_mod1)$fixed), "output/pav_bayesian_model_microbes.csv")
+write_csv(tidy(summary(rpv_mod2)$fixed), "output/rpv_bayesian_model_soil.csv")
+write_csv(tidy(summary(rpv_mic_mod1)$fixed), "output/rpv_bayesian_model_microbes.csv")
+write_csv(tidy(summary(co_mod2)$fixed), "output/co_bayesian_model_soil.csv")
+write_csv(tidy(summary(co_mic_mod1)$fixed), "output/co_bayesian_model_microbes.csv")
