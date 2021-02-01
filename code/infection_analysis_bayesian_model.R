@@ -80,7 +80,7 @@ rpv_lab <- pav_lab %>%
 pav_fig  <- ggplot(pav_dat, aes(microbes_f, pav, fill = nitrogen_added)) +
   stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.2)) +
   stat_summary(geom = "point", fun = "mean", size = 3, position = position_dodge(0.2), shape = 21) +
-  geom_text(data = pav_lab, aes(label = label), nudge_x = -0.4, fontface = "bold") +
+  geom_text(data = pav_lab, aes(label = label), nudge_x = -0.45, fontface = "bold") +
   facet_wrap(~ inoculation) +
   scale_fill_manual(values = col_pal, name = "N supply") +
   xlab("Microbe inoculation") +
@@ -93,7 +93,7 @@ pav_fig  <- ggplot(pav_dat, aes(microbes_f, pav, fill = nitrogen_added)) +
 rpv_fig <- ggplot(rpv_dat, aes(microbes_f, rpv, fill = nitrogen_added)) +
   stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.2)) +
   stat_summary(geom = "point", fun = "mean", size = 3, position = position_dodge(0.2), shape = 21) +
-  geom_text(data = rpv_lab, aes(label = label), nudge_x = -0.4, fontface = "bold") +
+  geom_text(data = rpv_lab, aes(label = label), nudge_x = -0.45, fontface = "bold") +
   facet_wrap(~ inoculation) +
   scale_fill_manual(values = col_pal, name = "N supply") +
   guides(fill = guide_legend(direction = "horizontal", title.position = "top")) +
