@@ -68,23 +68,23 @@ col_pal = c("white", "black")
 pan_lab <- tibble(infection =levels(dat2$infection) %>%
                     fct_relevel("Mock inoculation", "PAV infection", "RPV infection"),
                   label = c("(a)", "(b)", "(c)", "(d)")) %>%
-  mutate(soil = "sterile",
-         biomass = 0.65,
+  mutate(microbes_f = "sterile",
+         biomass = 0.64,
          nitrogen_added = "low")
 
 # biomass figure
-pdf("output/biomass_figure_rounded_up.pdf", width = 6, height = 6)
-ggplot(dat2, aes(soil, biomass, fill = nitrogen_added)) +
+pdf("output/biomass_figure_microbes.pdf", width = 5, height = 5)
+ggplot(dat2, aes(microbes_f, biomass, fill = nitrogen_added)) +
   stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.2)) +
   stat_summary(geom = "point", fun = "mean", size = 3, position = position_dodge(0.2), shape = 21) +
-  geom_text(data = pan_lab, aes(label = label), nudge_x = -0.4, fontface = "bold") +
+  geom_text(data = pan_lab, aes(label = label), nudge_x = -0.45, fontface = "bold") +
   facet_wrap(~ infection) +
   scale_fill_manual(values = col_pal, name = "N supply") +
   guides(fill = guide_legend(override.aes = list(shape = 21), direction = "horizontal", title.position = "top")) +
-  xlab("Field soil N treatment") +
+  xlab("Microbe inoculation") +
   ylab("Aboveground biomass [g/plant]") +
   theme_def +
-  theme(legend.position = c(0.88, 0.4))
+  theme(legend.position = c(0.85, 0.38))
 dev.off()
 
 
