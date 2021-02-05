@@ -13,6 +13,7 @@ library(tidyverse)
 library(cowplot)
 library(broom)
 library(brms)
+library(tidybayes)
 
 # import data
 dat <- read_csv("intermediate-data/bydv_microbes_data_rounded_up.csv")
@@ -257,6 +258,21 @@ co_mic_loo1
 # reasonable to do model comparison
 loo_compare(co_loo2, co_mic_loo1)
 # microbes model is preferred
+
+
+#### values for text ####
+
+# N supply on PAV incidence
+pav_mic_post1 <- posterior_samples(pav_mic_mod1) %>%
+  mutate(low_N = exp(b_Intercept)/(1 + exp(b_Intercept)),
+         high_N = exp(b_Intercept + b_N_added)/(1 + exp(b_Intercept + b_N_added)),
+         N_effect = high_N - low_N)
+
+ggplot(pav_mic_post1, aes(x = N_effect)) +
+  geom_histogram(bins = 100)
+
+mean_hdi(pav_mic_post1$N_effect)
+mean_hdi(pav_mic_post1$b_N_added)
 
 
 #### output ####

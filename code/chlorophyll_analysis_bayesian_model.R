@@ -46,10 +46,9 @@ dat2 %>%
   data.frame()
 # co-infection only has 1 rep for some treatments
 
-dat2 %>%
-  group_by(pav, rpv, N_added, soil) %>%
-  count() %>%
-  data.frame()
+# dataset without coinfection
+dat3 <- dat2 %>%
+  filter(infection != "Co-infection")
 
 
 #### visualize ####
@@ -140,6 +139,34 @@ chlor_mic_loo1
 # reasonable to do model comparison
 loo_compare(chlor_loo2, chlor_mic_loo1)
 # microbes model is preferred
+
+
+#### chlorophyll model, no co-infection ####
+
+# initial fit
+chlor_mod3 <- brm(log_chlorophyll ~ soil * N_added * infection, 
+                data = dat3,
+                family = gaussian,
+                prior = c(prior(normal(0, 10), class = Intercept),
+                          prior(normal(0, 10), class = b)),
+                iter = 6000, warmup = 1000, chains = 1)
+summary(chlor_mod3)
+
+# increase chains
+chlor_mod4 <- update(chlor_mod3, chains = 3)
+
+# check model
+summary(chlor_mod4) # estimates are nearly identical to chlor_mod2
+
+# microbes model
+chlor_mic_mod2 <- update(chlor_mod4,
+                       newdata = dat3,
+                       formula = log_chlorophyll ~ microbes * N_added * infection,
+                       prior = c(prior(normal(0, 10), class = Intercept),
+                                 prior(normal(0, 10), class = b)))
+
+# check model
+summary(chlor_mic_mod2) # estimates are nearly identical to chlor_mic_mod1
 
 
 #### output ####
