@@ -262,17 +262,59 @@ loo_compare(co_loo2, co_mic_loo1)
 
 #### values for text ####
 
-# N supply on PAV incidence
+# PAV incidence
 pav_mic_post1 <- posterior_samples(pav_mic_mod1) %>%
-  mutate(low_N = exp(b_Intercept)/(1 + exp(b_Intercept)),
+  rename(b_N_rpv_int = "b_N_added:inoc_rpv",
+         b_N_mic_int = "b_microbes:N_added",
+         b_mic_rpv_int = "b_microbes:inoc_rpv",
+         b_N_mic_rpv_int = "b_microbes:N_added:inoc_rpv") %>%
+  mutate(icp = exp(b_Intercept)/(1 + exp(b_Intercept)),
          high_N = exp(b_Intercept + b_N_added)/(1 + exp(b_Intercept + b_N_added)),
-         N_effect = high_N - low_N)
+         N_effect = high_N - icp,
+         coinoc = exp(b_Intercept + b_inoc_rpv)/(1 + exp(b_Intercept + b_inoc_rpv)),
+         co_effect = coinoc - icp,
+         coinoc_N = exp(b_Intercept + b_inoc_rpv + b_N_added + b_N_rpv_int)/(1 + exp(b_Intercept + b_inoc_rpv + b_N_added + b_N_rpv_int)),
+         N_co_effect = coinoc_N - coinoc,
+         microbes = exp(b_Intercept + b_microbes)/(1 + exp(b_Intercept + b_microbes)),
+         mic_effect = microbes - icp,
+         microbes_N = exp(b_Intercept + b_microbes + b_N_added + b_N_mic_int)/(1 + exp(b_Intercept + b_microbes + b_N_added + b_N_mic_int)),
+         N_mic_effect = microbes_N - microbes,
+         microbes_co = exp(b_Intercept + b_microbes + b_inoc_rpv + b_mic_rpv_int)/(1 + exp(b_Intercept + b_microbes + b_inoc_rpv + b_mic_rpv_int)),
+         co_mic_effect = microbes_co - microbes,
+         microbes_co_N = exp(b_Intercept + b_microbes + b_inoc_rpv + b_N_added + b_mic_rpv_int + b_N_mic_int + b_N_rpv_int + b_N_mic_rpv_int)/(1 + exp(b_Intercept + b_microbes + b_inoc_rpv + b_N_added + b_mic_rpv_int + b_N_mic_int + b_N_rpv_int + b_N_mic_rpv_int)),
+         N_co_mic_effect = microbes_co_N - microbes_co,
+         mic_co_effect = microbes_co - coinoc)
 
 ggplot(pav_mic_post1, aes(x = N_effect)) +
   geom_histogram(bins = 100)
 
+mean_hdci(pav_mic_post1$icp)
 mean_hdi(pav_mic_post1$N_effect)
-mean_hdi(pav_mic_post1$b_N_added)
+mean_hdi(pav_mic_post1$co_effect)
+mean_hdi(pav_mic_post1$N_co_effect)
+mean_hdi(pav_mic_post1$mic_effect)
+mean_hdi(pav_mic_post1$N_mic_effect)
+mean_hdi(pav_mic_post1$co_mic_effect)
+mean_hdi(pav_mic_post1$N_co_mic_effect)
+mean_hdi(pav_mic_post1$mic_co_effect)
+
+# RPV incidence
+rpv_mic_post1 <- posterior_samples(rpv_mic_mod1) %>%
+  mutate(icp = exp(b_Intercept)/(1 + exp(b_Intercept)),
+         coinoc = exp(b_Intercept + b_inoc_pav)/(1 + exp(b_Intercept + b_inoc_pav)),
+         co_effect = coinoc - icp)
+
+mean_hdi(rpv_mic_post1$icp)
+mean_hdi(rpv_mic_post1$co_effect)
+
+# RPV incidence
+co_mic_post1 <- posterior_samples(co_mic_mod1) %>%
+  mutate(icp = exp(b_Intercept)/(1 + exp(b_Intercept)),
+         microbes = exp(b_Intercept + b_microbes)/(1 + exp(b_Intercept + b_microbes)),
+         mic_effect = microbes - icp)
+
+mean_hdi(co_mic_post1$icp)
+mean_hdi(co_mic_post1$mic_effect)
 
 
 #### output ####

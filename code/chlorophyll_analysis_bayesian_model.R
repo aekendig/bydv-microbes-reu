@@ -169,6 +169,17 @@ chlor_mic_mod2 <- update(chlor_mod4,
 summary(chlor_mic_mod2) # estimates are nearly identical to chlor_mic_mod1
 
 
+#### values for text ####
+
+chlor_mic_post1 <- posterior_samples(chlor_mic_mod1) %>%
+  mutate(icp = exp(b_Intercept),
+         high_N = exp(b_Intercept + b_N_added),
+         N_effect = 100*(high_N - icp)/icp)
+
+mean_hdi(chlor_mic_post1$icp)
+mean_hdi(chlor_mic_post1$N_effect)
+
+
 #### output ####
 save(chlor_mod2, file = "output/chlor_bayesian_model_soil.rda")
 save(chlor_mic_mod1, file = "output/chlor_bayesian_model_microbes.rda")

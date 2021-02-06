@@ -12,6 +12,7 @@ rm(list = ls())
 library(tidyverse)
 library(broom)
 library(brms)
+library(tidybayes)
 
 # import data
 dat <- read_csv("intermediate-data/bydv_microbes_data_rounded_up.csv")
@@ -164,6 +165,17 @@ bio_mic_mod2 <- update(bio_mod4,
 
 # check model
 summary(bio_mic_mod2) # estimates are nearly identical to bio_mic_mod1
+
+
+#### values for text ####
+
+bio_mic_post1 <- posterior_samples(bio_mic_mod1) %>%
+  mutate(icp = exp(b_Intercept),
+         high_N = exp(b_Intercept + b_N_added),
+         N_effect = 100*(high_N - icp)/icp)
+
+mean_hdi(bio_mic_post1$icp)
+mean_hdi(bio_mic_post1$N_effect)
 
 
 #### output ####
