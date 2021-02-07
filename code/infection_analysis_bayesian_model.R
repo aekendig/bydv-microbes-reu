@@ -263,6 +263,62 @@ loo_compare(co_loo2, co_mic_loo1)
 #### values for text ####
 
 # PAV incidence
+pav_post2 <- posterior_samples(pav_mod2) %>%
+  rename(b_N_rpv_int = "b_N_added:inoc_rpv",
+         b_N_soilL_int = "b_soillowN:N_added",
+         b_N_soilA_int = "b_soilambientN:N_added",
+         b_soilL_rpv_int = "b_soillowN:inoc_rpv",
+         b_soilA_rpv_int = "b_soilambientN:inoc_rpv",
+         b_N_soilL_rpv_int = "b_soillowN:N_added:inoc_rpv",
+         b_N_soilA_rpv_int = "b_soilambientN:N_added:inoc_rpv") %>%
+  mutate(icp = exp(b_Intercept)/(1 + exp(b_Intercept)),
+         high_N = exp(b_Intercept + b_N_added)/(1 + exp(b_Intercept + b_N_added)),
+         N_effect = high_N - icp,
+         coinoc = exp(b_Intercept + b_inoc_rpv)/(1 + exp(b_Intercept + b_inoc_rpv)),
+         co_effect = coinoc - icp,
+         coinoc_N = exp(b_Intercept + b_inoc_rpv + b_N_added + b_N_rpv_int)/(1 + exp(b_Intercept + b_inoc_rpv + b_N_added + b_N_rpv_int)),
+         N_co_effect = coinoc_N - coinoc,
+         soilA = exp(b_Intercept + b_soilambientN)/(1 + exp(b_Intercept + b_soilambientN)),
+         soilL = exp(b_Intercept + b_soillowN)/(1 + exp(b_Intercept + b_soillowN)),
+         soilL_effect = soilL - icp,
+         soilL_N = exp(b_Intercept + b_soillowN + b_N_added + b_N_soilL_int)/(1 + exp(b_Intercept + b_soillowN + b_N_added + b_N_soilL_int)),
+         N_soilL_effect = soilL_N - soilL,
+         soilA_co = exp(b_Intercept + b_soilambientN + b_inoc_rpv + b_soilA_rpv_int)/(1 + exp(b_Intercept + b_soilambientN + b_inoc_rpv + b_soilA_rpv_int)),
+         soilL_co = exp(b_Intercept + b_soillowN + b_inoc_rpv + b_soilL_rpv_int)/(1 + exp(b_Intercept + b_soillowN + b_inoc_rpv + b_soilL_rpv_int)),
+         co_soilA_effect = soilA_co - soilA,
+         co_soilL_effect = soilL_co - soilL,
+         soilA_co_N = exp(b_Intercept + b_soilambientN + b_inoc_rpv + b_N_added + b_soilA_rpv_int + b_N_rpv_int + b_N_soilA_int + b_N_soilA_rpv_int)/(1 + exp(b_Intercept + b_soilambientN + b_inoc_rpv + b_N_added + b_soilA_rpv_int + b_N_rpv_int + b_N_soilA_int + b_N_soilA_rpv_int)),
+         soilL_co_N = exp(b_Intercept + b_soillowN + b_inoc_rpv + b_N_added + b_soilL_rpv_int + b_N_rpv_int + b_N_soilL_int + b_N_soilL_rpv_int)/(1 + exp(b_Intercept + b_soillowN + b_inoc_rpv + b_N_added + b_soilL_rpv_int + b_N_rpv_int + b_N_soilL_int + b_N_soilL_rpv_int)),
+         N_co_soilA_effect = soilA_co_N - soilA_co,
+         N_co_soilL_effect = soilL_co_N - soilL_co)
+
+mean_hdi(pav_post2$icp)
+mean_hdi(pav_post2$N_effect)
+mean_hdi(pav_post2$co_effect)
+mean_hdi(pav_post2$N_co_effect)
+mean_hdi(pav_post2$soilL_effect)
+mean_hdi(pav_post2$N_soilL_effect)
+mean_hdi(pav_post2$co_soilA_effect)
+mean_hdi(pav_post2$co_soilL_effect)
+mean_hdi(pav_post2$N_co_soilA_effect)
+mean_hdi(pav_post2$N_co_soilL_effect)
+
+# RPV incidence
+rpv_post2 <- posterior_samples(rpv_mod2) %>%
+  mutate(icp = exp(b_Intercept)/(1 + exp(b_Intercept)),
+         coinoc = exp(b_Intercept + b_inoc_pav)/(1 + exp(b_Intercept + b_inoc_pav)),
+         co_effect = coinoc - icp)
+
+mean_hdi(rpv_post2$icp)
+mean_hdi(rpv_post2$co_effect)
+
+# co incidence
+co_post2 <- posterior_samples(co_mod2) %>%
+  mutate(icp = exp(b_Intercept)/(1 + exp(b_Intercept)))
+
+mean_hdi(co_post2$icp)
+
+# PAV incidence microbes model
 pav_mic_post1 <- posterior_samples(pav_mic_mod1) %>%
   rename(b_N_rpv_int = "b_N_added:inoc_rpv",
          b_N_mic_int = "b_microbes:N_added",
@@ -298,7 +354,7 @@ mean_hdi(pav_mic_post1$co_mic_effect)
 mean_hdi(pav_mic_post1$N_co_mic_effect)
 mean_hdi(pav_mic_post1$mic_co_effect)
 
-# RPV incidence
+# RPV incidence microbes model
 rpv_mic_post1 <- posterior_samples(rpv_mic_mod1) %>%
   mutate(icp = exp(b_Intercept)/(1 + exp(b_Intercept)),
          coinoc = exp(b_Intercept + b_inoc_pav)/(1 + exp(b_Intercept + b_inoc_pav)),
@@ -307,7 +363,7 @@ rpv_mic_post1 <- posterior_samples(rpv_mic_mod1) %>%
 mean_hdi(rpv_mic_post1$icp)
 mean_hdi(rpv_mic_post1$co_effect)
 
-# RPV incidence
+# co incidence microbes model
 co_mic_post1 <- posterior_samples(co_mic_mod1) %>%
   mutate(icp = exp(b_Intercept)/(1 + exp(b_Intercept)),
          microbes = exp(b_Intercept + b_microbes)/(1 + exp(b_Intercept + b_microbes)),

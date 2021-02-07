@@ -12,6 +12,7 @@ rm(list = ls())
 library(tidyverse)
 library(broom)
 library(brms)
+library(tidybayes)
 
 # import data
 dat <- read_csv("intermediate-data/bydv_microbes_data_rounded_up.csv")
@@ -171,6 +172,28 @@ summary(chlor_mic_mod2) # estimates are nearly identical to chlor_mic_mod1
 
 #### values for text ####
 
+# soil model
+chlor_post2 <- posterior_samples(chlor_mod2) %>%
+  rename(soilA_pav_int = "b_soilambientN:infectionPAVinfection",
+         soilA_N_int = "b_soilambientN:N_added",
+         N_pav_int = "b_N_added:infectionPAVinfection",
+         soilA_N_pav_int = "b_soilambientN:N_added:infectionPAVinfection") %>%
+  mutate(icp = exp(b_Intercept),
+         high_N = exp(b_Intercept + b_N_added),
+         N_effect = 100*(high_N - icp)/icp,
+         soilA = exp(b_Intercept + b_soilambientN),
+         pav_soilA = exp(b_Intercept+ b_soilambientN + b_infectionPAVinfection + soilA_pav_int),
+         pav_soilA_effect = 100*(pav_soilA - soilA)/soilA,
+         soilA_N = exp(b_Intercept+ b_soilambientN + b_N_added + soilA_N_int),
+         pav_soilA_N = exp(b_Intercept+ b_soilambientN + b_N_added + b_infectionPAVinfection + soilA_N_int + soilA_pav_int + N_pav_int + soilA_N_pav_int),
+         pav_soilA_N_effect = 100*(pav_soilA_N - soilA_N)/soilA_N)
+
+mean_hdi(chlor_post2$icp)
+mean_hdi(chlor_post2$N_effect)
+mean_hdi(chlor_post2$pav_soilA_effect)
+mean_hdi(chlor_post2$pav_soilA_N_effect)
+
+# microbes model
 chlor_mic_post1 <- posterior_samples(chlor_mic_mod1) %>%
   mutate(icp = exp(b_Intercept),
          high_N = exp(b_Intercept + b_N_added),

@@ -169,6 +169,16 @@ summary(bio_mic_mod2) # estimates are nearly identical to bio_mic_mod1
 
 #### values for text ####
 
+# soil model
+bio_post2 <- posterior_samples(bio_mod2) %>%
+  mutate(icp = exp(b_Intercept),
+         high_N = exp(b_Intercept + b_N_added),
+         N_effect = 100*(high_N - icp)/icp)
+
+mean_hdi(bio_post2$icp)
+mean_hdi(bio_post2$N_effect)
+
+# microbes model
 bio_mic_post1 <- posterior_samples(bio_mic_mod1) %>%
   mutate(icp = exp(b_Intercept),
          high_N = exp(b_Intercept + b_N_added),
