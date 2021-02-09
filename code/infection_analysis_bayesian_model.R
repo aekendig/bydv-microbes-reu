@@ -265,13 +265,14 @@ loo_compare(co_loo2, co_mic_loo1)
 # PAV incidence
 pav_post2 <- posterior_samples(pav_mod2) %>%
   rename(b_N_rpv_int = "b_N_added:inoc_rpv",
-         b_N_soilL_int = "b_soillowN:N_added",
          b_N_soilA_int = "b_soilambientN:N_added",
-         b_soilL_rpv_int = "b_soillowN:inoc_rpv",
+         b_N_soilL_int = "b_soillowN:N_added",
+         b_N_soilH_int = "b_soilhighN:N_added",
          b_soilA_rpv_int = "b_soilambientN:inoc_rpv",
+         b_soilL_rpv_int = "b_soillowN:inoc_rpv",
          b_soilH_rpv_int = "b_soilhighN:inoc_rpv",
-         b_N_soilL_rpv_int = "b_soillowN:N_added:inoc_rpv",
-         b_N_soilA_rpv_int = "b_soilambientN:N_added:inoc_rpv") %>%
+         b_N_soilA_rpv_int = "b_soilambientN:N_added:inoc_rpv",
+         b_N_soilL_rpv_int = "b_soillowN:N_added:inoc_rpv") %>%
   mutate(icp = exp(b_Intercept)/(1 + exp(b_Intercept)),
          high_N = exp(b_Intercept + b_N_added)/(1 + exp(b_Intercept + b_N_added)),
          N_effect = high_N - icp,
@@ -283,8 +284,12 @@ pav_post2 <- posterior_samples(pav_mod2) %>%
          soilL = exp(b_Intercept + b_soillowN)/(1 + exp(b_Intercept + b_soillowN)),
          soilH = exp(b_Intercept + b_soilhighN)/(1 + exp(b_Intercept + b_soilhighN)),
          soilL_effect = soilL - icp,
+         soilA_N = exp(b_Intercept + b_soilambientN + b_N_added + b_N_soilA_int)/(1 + exp(b_Intercept + b_soilambientN + b_N_added + b_N_soilA_int)),
          soilL_N = exp(b_Intercept + b_soillowN + b_N_added + b_N_soilL_int)/(1 + exp(b_Intercept + b_soillowN + b_N_added + b_N_soilL_int)),
+         soilH_N = exp(b_Intercept + b_soilhighN + b_N_added + b_N_soilH_int)/(1 + exp(b_Intercept + b_soilhighN + b_N_added + b_N_soilH_int)),
+         N_soilA_effect = soilA_N - soilA,
          N_soilL_effect = soilL_N - soilL,
+         N_soilH_effect = soilH_N - soilH,
          soilL_N_effect = soilL_N - high_N,
          soilA_co = exp(b_Intercept + b_soilambientN + b_inoc_rpv + b_soilA_rpv_int)/(1 + exp(b_Intercept + b_soilambientN + b_inoc_rpv + b_soilA_rpv_int)),
          soilL_co = exp(b_Intercept + b_soillowN + b_inoc_rpv + b_soilL_rpv_int)/(1 + exp(b_Intercept + b_soillowN + b_inoc_rpv + b_soilL_rpv_int)),
@@ -302,7 +307,15 @@ mean_hdi(pav_post2$N_effect)
 mean_hdi(pav_post2$co_effect)
 mean_hdi(pav_post2$N_co_effect)
 mean_hdi(pav_post2$soilL_effect)
+mean_hdi(pav_post2$soilA)
+mean_hdi(pav_post2$soilA_N)
+mean_hdi(pav_post2$N_soilA_effect)
+mean_hdi(pav_post2$soilL)
+mean_hdi(pav_post2$soilL_N)
 mean_hdi(pav_post2$N_soilL_effect)
+mean_hdci(pav_post2$soilH)
+mean_hdci(pav_post2$soilH_N)
+mean_hdci(pav_post2$N_soilH_effect)
 mean_hdi(pav_post2$soilL_N_effect)
 mean_hdi(pav_post2$co_soilA_effect)
 mean_hdi(pav_post2$co_soilL_effect)
