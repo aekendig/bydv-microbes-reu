@@ -1,8 +1,3 @@
-##### info ####
-
-# goal: analyze data when any visible PCR band is counted as indicators of infection (rounding up)
-
-
 #### set-up ####
 
 # clear environment
@@ -59,63 +54,94 @@ dat2 %>%
 
 # theme
 theme_def <- theme_bw() +
-  theme(axis.text = element_text(size = 8, color="black"),
-        axis.title = element_text(size = 10, color="black"),
+  theme(axis.text.y = element_text(size = 7.5, color="black"),
+        axis.text.x = element_text(size = 7, color="black"),
+        axis.title.y = element_text(size = 10, color="black"),
+        axis.title.x = element_blank(),
         panel.background = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
         legend.text = element_text(size = 8),
         legend.title = element_text(size = 10),
         legend.box.margin = margin(-10, -10, -10, -10),
+        legend.background = element_blank(),
+        legend.position = "bottom",
+        legend.direction = "horizontal",
         strip.background = element_blank(),
-        strip.text = element_text(size = 10, color="black"))
+        strip.text = element_blank())
 
 # palettes
 col_pal = c("white", "black")
 
 # panel labels
-pav_lab <- tibble(inoculation = c("Single inoculation", "Co-inoculation") %>% fct_relevel("Single inoculation"),
-                  label = c("(a)", "(b)")) %>%
-  mutate(microbes_f = "sterile",
-         pav = 1,
-         nitrogen_added = "low")
+pan_labs <- tibble(soil = levels(dat2$soil) %>% fct_relevel("sterile", "ambient N", "low N"),
+                   label = c("(bold('a'))~sterile~soil",
+                             "(bold('b'))~ambient~N~microbes",
+                             "(bold('c'))~low~N~microbes",
+                             "(bold('d'))~high~N~microbes")) %>%
+  mutate(inoculation = "Single inoculation",
+         nitrogen_added = "low",
+         pav = 1.15,
+         rpv = 1.15,
+         coinfection = 1)
 
-rpv_lab <- pav_lab %>%
-  mutate(label = recode(label, "(a)" = "(c)", "(b)" = "(d)"),
-         rpv = 1)
+# sample sizes
+pav_samps <- pav_dat %>%
+  group_by(soil, nitrogen_added, inoculation) %>%
+  count() %>%
+  mutate(pav = -0.05)
+
+rpv_samps <- rpv_dat %>%
+  group_by(soil, nitrogen_added, inoculation) %>%
+  count() %>%
+  mutate(rpv = -0.05)
+
+co_samps <- co_dat %>%
+  group_by(soil, nitrogen_added) %>%
+  count() %>%
+  mutate(coinfection = -0.05)
 
 # PAV infection prevalence
-pav_fig  <- ggplot(pav_dat, aes(microbes_f, pav, fill = nitrogen_added)) +
-  stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.2)) +
-  stat_summary(geom = "point", fun = "mean", size = 3, position = position_dodge(0.2), shape = 21) +
-  geom_text(data = pav_lab, aes(label = label), nudge_x = -0.45, fontface = "bold") +
-  facet_wrap(~ inoculation) +
-  scale_fill_manual(values = col_pal, name = "N supply") +
-  xlab("Microbe inoculation") +
+pdf("output/pav_infection_figure.pdf", width = 4, height = 4.1)
+ggplot(pav_dat, aes(inoculation, pav, fill = nitrogen_added)) +
+  stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.3)) +
+  stat_summary(geom = "point", fun = "mean", size = 2, position = position_dodge(0.3), shape = 21) +
+  geom_text(data = pan_labs, aes(label = label), hjust = 0, nudge_x = -0.55, parse = T, size = 3) +
+  geom_text(data = pav_samps, aes(label = n), size = 2.5, position = position_dodge(0.4)) +
+  facet_wrap(~soil) +
+  scale_fill_manual(values = col_pal, name = "Nitrogen supply") +
   ylab("PAV incidence") +
-  theme_def +
-  theme(legend.position = "none",
-        axis.title.x = element_blank())
+  coord_cartesian(ylim = c(-0.08, 1.18)) +
+  theme_def
+dev.off()
 
 # RPV infection prevalence
-rpv_fig <- ggplot(rpv_dat, aes(microbes_f, rpv, fill = nitrogen_added)) +
-  stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.2)) +
-  stat_summary(geom = "point", fun = "mean", size = 3, position = position_dodge(0.2), shape = 21) +
-  geom_text(data = rpv_lab, aes(label = label), nudge_x = -0.45, fontface = "bold") +
-  facet_wrap(~ inoculation) +
-  scale_fill_manual(values = col_pal, name = "N supply") +
-  guides(fill = guide_legend(direction = "horizontal", title.position = "top")) +
-  xlab("Microbe inoculation") +
+pdf("output/rpv_infection_figure.pdf", width = 4, height = 4.1)
+ggplot(rpv_dat, aes(inoculation, rpv, fill = nitrogen_added)) +
+  stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.3)) +
+  stat_summary(geom = "point", fun = "mean", size = 2, position = position_dodge(0.3), shape = 21) +
+  geom_text(data = pan_labs, aes(label = label), hjust = 0, nudge_x = -0.55, parse = T, size = 3) +
+  geom_text(data = rpv_samps, aes(label = n), size = 2.5, position = position_dodge(0.4)) +
+  facet_wrap(~soil) +
+  scale_fill_manual(values = col_pal, name = "Nitrogen supply") +
   ylab("RPV incidence") +
-  theme_def +
-  theme(legend.position = c(0.13, 0.13),
-        strip.text = element_blank(),
-        legend.margin = margin(0, 0, 0, 0))
+  coord_cartesian(ylim = c(-0.08, 1.18)) +
+  theme_def
+dev.off()
 
-# combine figures
-pdf("output/infection_figure_microbes.pdf", width = 5, height = 5)
-plot_grid(pav_fig, rpv_fig,
-          nrow = 2)
+# Co-infection prevalence
+pdf("output/co_infection_figure.pdf", width = 4, height = 4)
+ggplot(co_dat, aes(nitrogen_added, coinfection)) +
+  stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0) +
+  stat_summary(geom = "point", fun = "mean", size = 2, shape = 21, fill = "black") +
+  geom_text(data = pan_labs, aes(label = label), hjust = 0, nudge_x = -0.55, parse = T, size = 3) +
+  geom_text(data = co_samps, aes(label = n), size = 2.5) +
+  facet_wrap(~soil) +
+  xlab("Nitrogen supply") +
+  ylab("Co-infection incidence") +
+  coord_cartesian(ylim = c(-0.08, 1.05)) +
+  theme_def +
+  theme(axis.title.x = element_text(size = 10, color="black"))
 dev.off()
 
 
