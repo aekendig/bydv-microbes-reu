@@ -177,8 +177,13 @@ chlor_post2 <- posterior_samples(chlor_mod2) %>%
          pav_soilA_N_effect = 100*(pav_soilA_N - soilA_N)/soilA_N)
 
 mean_hdi(chlor_post2$icp)
+mean_hdi(chlor_post2$high_N)
 mean_hdi(chlor_post2$N_effect)
+
+mean_hdi(chlor_post2$soilA)
+mean_hdi(chlor_post2$pav_soilA)
 mean_hdi(chlor_post2$pav_soilA_effect)
+
 mean_hdi(chlor_post2$pav_soilA_N_effect)
 
 # microbes model

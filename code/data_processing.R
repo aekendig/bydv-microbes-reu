@@ -55,6 +55,11 @@ dat2 %>%
   group_by(disease, rpv) %>%
   count()
 
+# total inoculations
+dat2 %>%
+  group_by(disease) %>%
+  count()
+
 # round half values up
 # remove contaminated samples
 dat_up <- dat2 %>%

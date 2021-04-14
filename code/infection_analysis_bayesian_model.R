@@ -301,61 +301,67 @@ pav_post2 <- posterior_samples(pav_mod2) %>%
          b_N_soilL_rpv_int = "b_soillowN:N_added:inoc_rpv") %>%
   mutate(icp = exp(b_Intercept)/(1 + exp(b_Intercept)),
          high_N = exp(b_Intercept + b_N_added)/(1 + exp(b_Intercept + b_N_added)),
-         N_effect = high_N - icp,
+         N_effect = 100 * (high_N - icp)/icp,
          coinoc = exp(b_Intercept + b_inoc_rpv)/(1 + exp(b_Intercept + b_inoc_rpv)),
-         co_effect = coinoc - icp,
+         co_effect = 100 * (coinoc - icp)/icp,
          coinoc_N = exp(b_Intercept + b_inoc_rpv + b_N_added + b_N_rpv_int)/(1 + exp(b_Intercept + b_inoc_rpv + b_N_added + b_N_rpv_int)),
-         N_co_effect = coinoc_N - coinoc,
+         N_co_effect = 100 * (coinoc_N - coinoc)/coinoc,
          soilA = exp(b_Intercept + b_soilambientN)/(1 + exp(b_Intercept + b_soilambientN)),
          soilL = exp(b_Intercept + b_soillowN)/(1 + exp(b_Intercept + b_soillowN)),
          soilH = exp(b_Intercept + b_soilhighN)/(1 + exp(b_Intercept + b_soilhighN)),
-         soilL_effect = soilL - icp,
+         soilL_effect = 100 * (soilL - icp)/icp,
          soilA_N = exp(b_Intercept + b_soilambientN + b_N_added + b_N_soilA_int)/(1 + exp(b_Intercept + b_soilambientN + b_N_added + b_N_soilA_int)),
          soilL_N = exp(b_Intercept + b_soillowN + b_N_added + b_N_soilL_int)/(1 + exp(b_Intercept + b_soillowN + b_N_added + b_N_soilL_int)),
          soilH_N = exp(b_Intercept + b_soilhighN + b_N_added + b_N_soilH_int)/(1 + exp(b_Intercept + b_soilhighN + b_N_added + b_N_soilH_int)),
-         N_soilA_effect = soilA_N - soilA,
-         N_soilL_effect = soilL_N - soilL,
-         N_soilH_effect = soilH_N - soilH,
-         soilL_N_effect = soilL_N - high_N,
+         N_soilA_effect = 100 * (soilA_N - soilA) / soilA,
+         N_soilL_effect = 100 * (soilL_N - soilL) / soilL,
+         N_soilH_effect = 100 * (soilH_N - soilH) / soilH,
+         soilL_N_effect = 100 * (soilL_N - high_N) / high_N,
          soilA_co = exp(b_Intercept + b_soilambientN + b_inoc_rpv + b_soilA_rpv_int)/(1 + exp(b_Intercept + b_soilambientN + b_inoc_rpv + b_soilA_rpv_int)),
          soilL_co = exp(b_Intercept + b_soillowN + b_inoc_rpv + b_soilL_rpv_int)/(1 + exp(b_Intercept + b_soillowN + b_inoc_rpv + b_soilL_rpv_int)),
          soilH_co = exp(b_Intercept + b_soilhighN + b_inoc_rpv + b_soilH_rpv_int)/(1 + exp(b_Intercept + b_soilhighN + b_inoc_rpv + b_soilH_rpv_int)),
-         co_soilA_effect = soilA_co - soilA,
-         co_soilL_effect = soilL_co - soilL,
-         co_soilH_effect = soilH_co - soilH,
+         co_soilA_effect = 100 * (soilA_co - soilA) / soilA,
+         co_soilL_effect = 100 * (soilL_co - soilL) / soilL,
+         co_soilH_effect = 100 * (soilH_co - soilH) / soilH,
          soilA_co_N = exp(b_Intercept + b_soilambientN + b_inoc_rpv + b_N_added + b_soilA_rpv_int + b_N_rpv_int + b_N_soilA_int + b_N_soilA_rpv_int)/(1 + exp(b_Intercept + b_soilambientN + b_inoc_rpv + b_N_added + b_soilA_rpv_int + b_N_rpv_int + b_N_soilA_int + b_N_soilA_rpv_int)),
          soilL_co_N = exp(b_Intercept + b_soillowN + b_inoc_rpv + b_N_added + b_soilL_rpv_int + b_N_rpv_int + b_N_soilL_int + b_N_soilL_rpv_int)/(1 + exp(b_Intercept + b_soillowN + b_inoc_rpv + b_N_added + b_soilL_rpv_int + b_N_rpv_int + b_N_soilL_int + b_N_soilL_rpv_int)),
-         N_co_soilA_effect = soilA_co_N - soilA_co,
-         N_co_soilL_effect = soilL_co_N - soilL_co)
+         N_co_soilA_effect = 100 * (soilA_co_N - soilA_co) / soilA_co,
+         N_co_soilL_effect = 100 * (soilL_co_N - soilL_co) / soilL_co)
 
+# sterile soil paragraph
 mean_hdi(pav_post2$icp)
+mean_hdi(pav_post2$high_N)
 mean_hdi(pav_post2$N_effect)
+
+mean_hdi(pav_post2$coinoc)
 mean_hdi(pav_post2$co_effect)
+
 mean_hdi(pav_post2$N_co_effect)
-mean_hdi(pav_post2$soilL_effect)
-mean_hdi(pav_post2$soilA)
-mean_hdi(pav_post2$soilA_N)
-mean_hdi(pav_post2$N_soilA_effect)
+
+# soil microbes paragraph
 mean_hdi(pav_post2$soilL)
-mean_hdi(pav_post2$soilL_N)
-mean_hdi(pav_post2$N_soilL_effect)
-mean_hdci(pav_post2$soilH)
-mean_hdci(pav_post2$soilH_N)
+mean_hdi(pav_post2$soilL_effect)
+
+mean_hdci(pav_post2$N_soilL_effect)
+mean_hdi(pav_post2$N_soilA_effect)
 mean_hdci(pav_post2$N_soilH_effect)
-mean_hdi(pav_post2$soilL_N_effect)
-mean_hdi(pav_post2$co_soilA_effect)
+
 mean_hdi(pav_post2$co_soilL_effect)
+mean_hdi(pav_post2$co_soilA_effect)
+
+mean_hdci(pav_post2$soilH)
+mean_hdi(pav_post2$soilH_co)
 mean_hdi(pav_post2$co_soilH_effect)
-mean_hdi(pav_post2$N_co_soilA_effect)
-mean_hdi(pav_post2$N_co_soilL_effect)
 
 # RPV incidence
 rpv_post2 <- posterior_samples(rpv_mod2) %>%
   mutate(icp = exp(b_Intercept)/(1 + exp(b_Intercept)),
          coinoc = exp(b_Intercept + b_inoc_pav)/(1 + exp(b_Intercept + b_inoc_pav)),
-         co_effect = coinoc - icp)
+         co_effect = 100 * (coinoc - icp)/icp)
 
+# sterile soil paragraph
 mean_hdi(rpv_post2$icp)
+mean_hdi(rpv_post2$coinoc)
 mean_hdi(rpv_post2$co_effect)
 
 # co incidence
