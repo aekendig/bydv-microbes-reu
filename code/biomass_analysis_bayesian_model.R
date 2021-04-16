@@ -176,6 +176,72 @@ mean_hdi(bio_mic_post1$icp)
 mean_hdi(bio_mic_post1$N_effect)
 
 
+#### power analysis ####
+
+# source: https://solomonkurz.netlify.app/post/bayesian-power-analysis-part-i/
+
+# use model output
+summary(bio_mod2)
+
+# parameters
+mu_h <- -1.61
+mu_i <- -1.61 - 0.23
+sig <- 0.53
+n_h <- nrow(dat3 %>%
+              filter(soil == "sterile" & N_added == 0 & infection == "Mock inoculation"))
+n_i <- nrow(dat3 %>%
+              filter(soil == "sterile" & N_added == 0 & infection == "RPV infection"))
+n_sim <- 100
+
+# first simulation
+set.seed(1)
+
+d <- tibble(group = c(rep("healthy", n_h), rep("infected", n_i))) %>%
+  mutate(infection = ifelse(group == "healthy", 0, 1),
+         y = ifelse(group == "healthy",
+                    rnorm(n_h, mean = mu_h, sd = sig),
+                    rnorm(n_i, mean = mu_i, sd = sig)))
+
+fit <- brm(data = d,
+           family = gaussian,
+           y ~ infection,
+           prior = c(prior(normal(-1.6, 2), class = Intercept),
+                     prior(normal(0, 2), class = b)),
+           seed = 1)
+
+plot(fit)
+summary(fit)
+
+#### start here: tidy doesn't work with brmsfit ####
+
+# iterative function
+sim_d_and_fit <- function(seed){
+  
+  set.seed(seed)
+  
+  d <- tibble(group = c(rep("healthy", n_h), rep("infected", n_i))) %>%
+    mutate(infection = ifelse(group == "healthy", 0, 1),
+           y = ifelse(group == "healthy",
+                      rnorm(n_h, mean = mu_h, sd = sig),
+                      rnorm(n_i, mean = mu_i, sd = sig)))
+  
+  update(fit,
+         newdata = d, 
+         seed = seed) %>% 
+    broom::tidy(prob = .95) %>% 
+    filter(term == "b_treatment")
+}
+
+# run simulations
+t1 <- Sys.time()
+
+s <- tibble(seed = 1:n_sim) %>% 
+  mutate(tidy = map(seed, sim_d_and_fit)) %>% 
+  unnest(tidy)
+
+t2 <- Sys.time()
+
+
 #### output ####
 save(bio_mod2, file = "output/bio_bayesian_model_soil.rda")
 save(bio_mic_mod1, file = "output/bio_bayesian_model_microbes.rda")

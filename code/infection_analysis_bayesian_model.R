@@ -110,7 +110,7 @@ ggplot(pav_dat, aes(inoculation, pav, fill = nitrogen_added)) +
   geom_text(data = pav_samps, aes(label = n), size = 2.5, position = position_dodge(0.4)) +
   facet_wrap(~soil) +
   scale_fill_manual(values = col_pal, name = "Nitrogen supply") +
-  ylab("PAV incidence") +
+  ylab("BYDV-PAV incidence") +
   coord_cartesian(ylim = c(-0.08, 1.18)) +
   theme_def
 dev.off()
@@ -124,7 +124,7 @@ ggplot(rpv_dat, aes(inoculation, rpv, fill = nitrogen_added)) +
   geom_text(data = rpv_samps, aes(label = n), size = 2.5, position = position_dodge(0.4)) +
   facet_wrap(~soil) +
   scale_fill_manual(values = col_pal, name = "Nitrogen supply") +
-  ylab("RPV incidence") +
+  ylab("CYDV-RPV incidence") +
   coord_cartesian(ylim = c(-0.08, 1.18)) +
   theme_def
 dev.off()
