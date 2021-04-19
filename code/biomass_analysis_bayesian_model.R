@@ -191,7 +191,9 @@ n_h <- nrow(dat3 %>%
               filter(soil == "sterile" & N_added == 0 & infection == "Mock inoculation"))
 n_i <- nrow(dat3 %>%
               filter(soil == "sterile" & N_added == 0 & infection == "RPV infection"))
-n_sim <- 100
+n_sim <- 1000
+n_h2 <- n_h * 2
+n_i2 <- n_i * 2
 
 # first simulation
 set.seed(1)
@@ -211,35 +213,76 @@ fit <- brm(data = d,
 
 plot(fit)
 summary(fit)
-
-#### start here: tidy doesn't work with brmsfit ####
+summary(fit)$fixed[2, c(1, 3, 4)]
 
 # iterative function
-sim_d_and_fit <- function(seed){
+sim_d_and_fit <- function(seed, n_c, n_t){
   
   set.seed(seed)
   
-  d <- tibble(group = c(rep("healthy", n_h), rep("infected", n_i))) %>%
+  d <- tibble(group = c(rep("healthy", n_c), rep("infected", n_t))) %>%
     mutate(infection = ifelse(group == "healthy", 0, 1),
            y = ifelse(group == "healthy",
-                      rnorm(n_h, mean = mu_h, sd = sig),
-                      rnorm(n_i, mean = mu_i, sd = sig)))
+                      rnorm(n_c, mean = mu_h, sd = sig),
+                      rnorm(n_t, mean = mu_i, sd = sig)))
   
-  update(fit,
-         newdata = d, 
-         seed = seed) %>% 
-    broom::tidy(prob = .95) %>% 
-    filter(term == "b_treatment")
+  fit_new <- update(fit,
+                    newdata = d, 
+                    seed = seed)
+  
+  return(summary(fit_new)$fixed[2, c(1, 3, 4)])
 }
 
 # run simulations
 t1 <- Sys.time()
 
 s <- tibble(seed = 1:n_sim) %>% 
-  mutate(tidy = map(seed, sim_d_and_fit)) %>% 
-  unnest(tidy)
+  mutate(tidy = map(seed, sim_d_and_fit, n_c = n_h, n_t = n_i))
 
 t2 <- Sys.time()
+
+# format s
+s2 <- s %>%
+  unnest_wider(tidy) %>%
+  rename(estimate = Estimate,
+         lower = `l-95% CI`,
+         upper = `u-95% CI`)
+
+# visualize
+ggplot(s2, aes(x = seed, y = estimate, ymin = lower, ymax = upper)) +
+  geom_pointrange(fatten = 1/2) +
+  geom_hline(yintercept = c(0, -0.23), color = "red") +
+  labs(x = "seed (i.e., simulation index)",
+       y = expression(beta[1]))
+
+# summarize
+s2 %>%
+  mutate(sig = case_when(lower < 0 & upper < 0 ~ 1,
+                         lower > 0 & upper > 0 ~ 1,
+                         TRUE ~ 0)) %>%
+  summarise(power = sum(sig) / n_sim)
+
+# run simulations for higher sample size
+t3 <- Sys.time()
+
+v <- tibble(seed = 1:n_sim) %>% 
+  mutate(tidy = map(seed, sim_d_and_fit, n_c = n_h2, n_t = n_i2))
+
+t4 <- Sys.time()
+
+# format s
+v2 <- v %>%
+  unnest_wider(tidy) %>%
+  rename(estimate = Estimate,
+         lower = `l-95% CI`,
+         upper = `u-95% CI`)
+
+# summarize
+v2 %>%
+  mutate(sig = case_when(lower < 0 & upper < 0 ~ 1,
+                         lower > 0 & upper > 0 ~ 1,
+                         TRUE ~ 0)) %>%
+  summarise(power = sum(sig) / n_sim)
 
 
 #### output ####
@@ -248,3 +291,6 @@ save(bio_mic_mod1, file = "output/bio_bayesian_model_microbes.rda")
 
 write_csv(tidy(summary(bio_mod2)$fixed), "output/bio_bayesian_model_soil.csv")
 write_csv(tidy(summary(bio_mic_mod1)$fixed), "output/bio_bayesian_model_microbes.csv")
+
+write_csv(s2, "output/simulated_datasets_1x_samp_size.csv")
+write_csv(v2, "output/simulated_datasets_2x_samp_size.csv")
