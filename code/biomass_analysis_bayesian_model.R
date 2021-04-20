@@ -194,6 +194,10 @@ n_i <- nrow(dat3 %>%
 n_sim <- 1000
 n_h2 <- n_h * 2
 n_i2 <- n_i * 2
+n_h3 <- n_h * 9
+n_i3 <- n_i * 9
+n_h4 <- n_h * 10
+n_i4 <- n_i * 10
 
 # first simulation
 set.seed(1)
@@ -262,23 +266,49 @@ s2 %>%
                          TRUE ~ 0)) %>%
   summarise(power = sum(sig) / n_sim)
 
-# run simulations for higher sample size
-t3 <- Sys.time()
-
+# run simulations for 2x sample size
 v <- tibble(seed = 1:n_sim) %>% 
   mutate(tidy = map(seed, sim_d_and_fit, n_c = n_h2, n_t = n_i2))
 
-t4 <- Sys.time()
-
-# format s
 v2 <- v %>%
   unnest_wider(tidy) %>%
   rename(estimate = Estimate,
          lower = `l-95% CI`,
          upper = `u-95% CI`)
 
-# summarize
 v2 %>%
+  mutate(sig = case_when(lower < 0 & upper < 0 ~ 1,
+                         lower > 0 & upper > 0 ~ 1,
+                         TRUE ~ 0)) %>%
+  summarise(power = sum(sig) / n_sim)
+
+# run simulations for 9x sample size
+z <- tibble(seed = 1:n_sim) %>% 
+  mutate(tidy = map(seed, sim_d_and_fit, n_c = n_h3, n_t = n_i3))
+
+z2 <- z %>%
+  unnest_wider(tidy) %>%
+  rename(estimate = Estimate,
+         lower = `l-95% CI`,
+         upper = `u-95% CI`)
+
+z2 %>%
+  mutate(sig = case_when(lower < 0 & upper < 0 ~ 1,
+                         lower > 0 & upper > 0 ~ 1,
+                         TRUE ~ 0)) %>%
+  summarise(power = sum(sig) / n_sim)
+
+# run simulations for 10x sample size
+y <- tibble(seed = 1:n_sim) %>% 
+  mutate(tidy = map(seed, sim_d_and_fit, n_c = n_h4, n_t = n_i4))
+
+y2 <- y %>%
+  unnest_wider(tidy) %>%
+  rename(estimate = Estimate,
+         lower = `l-95% CI`,
+         upper = `u-95% CI`)
+
+y2 %>%
   mutate(sig = case_when(lower < 0 & upper < 0 ~ 1,
                          lower > 0 & upper > 0 ~ 1,
                          TRUE ~ 0)) %>%
@@ -294,3 +324,5 @@ write_csv(tidy(summary(bio_mic_mod1)$fixed), "output/bio_bayesian_model_microbes
 
 write_csv(s2, "output/simulated_datasets_1x_samp_size.csv")
 write_csv(v2, "output/simulated_datasets_2x_samp_size.csv")
+write_csv(z2, "output/simulated_datasets_9x_samp_size.csv")
+write_csv(y2, "output/simulated_datasets_10x_samp_size.csv")
