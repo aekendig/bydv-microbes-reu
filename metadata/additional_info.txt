@@ -1,0 +1,2 @@
+Recommended protocol to run analyses: 
+Using RStudio, create a new project for these analyses. In the project directory, create new directories named "data", "code", and "output". Place the data and code downloaded from this repository in their corresponding directories. You can now run the code for biomass analysis, chlorophyll analysis, and infection analysis in any order. Each of these will source the data processing code at the beginning. Figures, models, and tables will be saved to the output directory.

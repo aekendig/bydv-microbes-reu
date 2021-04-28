@@ -39,6 +39,7 @@ vignettes/*.pdf
 /data/
 /output/
 /intermediate-data/
+/edi/
 
 # Manuscript
 /manuscript/

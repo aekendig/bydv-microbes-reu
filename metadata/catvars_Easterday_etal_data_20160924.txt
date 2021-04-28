@@ -1,0 +1,19 @@
+attributeName	code	definition
+nutrient	Ctrl	"low nitrogen supply (control), 7.5 _M of ammonium nitrate in the modified Hoagland solution"
+nutrient	N	"high nitrogen supply (control), 7.5 _M of ammonium nitrate in the modified Hoagland solution"
+soil	A	sterilized soil with field soil added; 0 kg N per ha per yr added to the field plots where soil was collected
+soil	D	sterilized soil with field soil added; 34 kg N per ha per yr added to the field plots where soil was collected
+soil	H	sterilized soil with field soil added; 270 kg N per ha per yr added to the field plots where soil was collected
+soil	Sterile	sterilized soil without field soil added
+disease	Co	co-inoculation
+disease	Healthy	mock inoculation
+disease	PAV	PAV only inoculation
+disease	RPV	RPV only inoculation
+pav	0	PAV was not detected in plant
+pav	0.5	"PAV was detected in plant, but the gel electrophoresis band was weak"
+pav	1	PAV was detected in plant and the gel electrophoresis band was strong
+rpv	0	RPV was not detected in plant
+rpv	0.5	"RPV was detected in plant, but the gel electrophoresis band was weak"
+rpv	1	RPV was detected in plant and the gel electrophoresis band was strong
+tissue_left	yes	plant tissue remained following RNA extraction
+tissue_left	no	no plant tissue remained following RNA extraction

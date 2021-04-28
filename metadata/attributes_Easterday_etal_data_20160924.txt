@@ -1,0 +1,18 @@
+attributeName	attributeDefinition	class	unit	dateTimeFormatString	missingValueCode	missingValueCodeExplanation
+nutrient	nitrogen supply treatment in which the plant grew	categorical				
+soil	soil microbial treatment in which the plant grew	categorical				
+disease	virus inoculation treatment	categorical				
+replicate	experimental replicate	numeric	dimensionless			
+pav	indicator variable for detection of PAV infection	categorical			NA	not available (sample not analyzed)
+rpv	indicator variable for detection of RPV infection	categorical			NA	not available (sample not analyzed)
+extraction_set	order in which RNA extraction was performed on tissue samples	numeric	dimensionless		NA	not available (sample not analyzed)
+mass_tissue_used	amount of tissue used for RNA extraction	numeric	milligram		NA	not available (sample not analyzed)
+date_extracted	date of RNA extraction	Date		YYYY-MM-DD	NA	not available (sample not analyzed)
+tissue_left	indicator variable for whether plant tissue remained following RNA extraction	categorical			NA	not available (sample not analyzed)
+biomass	weight of plant	numeric	gram		NA	not available (plant not measured)
+date_rt	date of reverse transcription	Date		YYYY-MM-DD	NA	not available (sample not analyzed)
+date_pcr	date of PCR	Date		YYYY-MM-DD	NA	not available (sample not analyzed)
+date_gel	date of gel electrophoresis	Date		YYYY-MM-DD	NA	not available (sample not analyzed)
+chlorophyll_1	first chlorophyll measurement	numeric	SPAD		NA	not available (plant not measured)
+chlorophyll_2	second chlorophyll measurement	numeric	SPAD		NA	not available (plant not measured)
+chlorophyll_3	third chlorophyll measurement	numeric	SPAD		NA	not available (plant not measured)

@@ -1,0 +1,2 @@
+id	unitType	parentSI	multiplierToSI	description
+SPAD	dimensionless		1	"SPAD corresponds to the amount of chlorophyll in a plant leaf and its ""greenness"". SPAD is calculated using the ratio of red (~650 nm) and infrared (~940 nm) light intensities emitted by LEDs, transmitted by the leaf, and converted to electrical signals. For more information, see user manual for SPAD 502 chlorophyll meters (Konica Minolta)."
