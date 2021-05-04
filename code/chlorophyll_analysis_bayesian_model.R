@@ -106,7 +106,7 @@ ggplot(dat2, aes(infection_abb, chlorophyll, fill = nitrogen_added)) +
   facet_wrap(~soil) +
   scale_fill_manual(values = col_pal, name = "Nitrogen supply") +
   xlab("Infection") +
-  ylab("Leaf chlorophyll content (SPAD)") +
+  ylab("Leaf chlorophyll content [SPAD]") +
   coord_cartesian(ylim = c(14, 32.3)) +
   theme_def
 dev.off()
