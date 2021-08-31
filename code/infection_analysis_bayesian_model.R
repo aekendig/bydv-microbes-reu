@@ -13,6 +13,11 @@ library(tidybayes)
 # import data
 dat <- read_csv("intermediate-data/bydv_microbes_data_rounded_up.csv")
 
+# function to convert logit to probability
+logit2prob <- function(x){
+  return(exp(x) / (1 + exp(x)))
+}
+
 
 #### edit data ####
 
@@ -48,101 +53,22 @@ dat2 %>%
   data.frame()
 
 
-#### visualize ####
+#### initial visualization ####
 
-# small figures: 80 mm, large figures: 180 mm
-
-# theme
-theme_def <- theme_bw() +
-  theme(axis.text.y = element_text(size = 7.5, color="black"),
-        axis.text.x = element_text(size = 7, color="black"),
-        axis.title.y = element_text(size = 10, color="black"),
-        axis.title.x = element_blank(),
-        panel.background = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        legend.text = element_text(size = 8),
-        legend.title = element_text(size = 10),
-        legend.box.margin = margin(-10, -10, -10, -10),
-        legend.background = element_blank(),
-        legend.position = "bottom",
-        legend.direction = "horizontal",
-        strip.background = element_blank(),
-        strip.text = element_blank())
-
-# palettes
-col_pal = c("white", "black")
-
-# panel labels
-pan_labs <- tibble(soil = levels(dat2$soil) %>% fct_relevel("sterile", "ambient N", "low N"),
-                   label = c("(bold('a'))~sterile~soil",
-                             "(bold('b'))~ambient~N~microbes",
-                             "(bold('c'))~low~N~microbes",
-                             "(bold('d'))~high~N~microbes")) %>%
-  mutate(inoculation = "Single inoculation",
-         nitrogen_added = "low",
-         pav = 1.15,
-         rpv = 1.15,
-         coinfection = 1)
-
-# sample sizes
-pav_samps <- pav_dat %>%
-  group_by(soil, nitrogen_added, inoculation) %>%
-  count() %>%
-  mutate(pav = -0.05)
-
-rpv_samps <- rpv_dat %>%
-  group_by(soil, nitrogen_added, inoculation) %>%
-  count() %>%
-  mutate(rpv = -0.05)
-
-co_samps <- co_dat %>%
-  group_by(soil, nitrogen_added) %>%
-  count() %>%
-  mutate(coinfection = -0.05)
-
-# PAV infection prevalence
-pdf("output/pav_infection_figure.pdf", width = 4, height = 4.1)
-ggplot(pav_dat, aes(inoculation, pav, fill = nitrogen_added)) +
+ggplot(pav_dat, aes(inoculation, pav, color = nitrogen_added)) +
   stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.3)) +
-  stat_summary(geom = "point", fun = "mean", size = 2, position = position_dodge(0.3), shape = 21) +
-  geom_text(data = pan_labs, aes(label = label), hjust = 0, nudge_x = -0.55, parse = T, size = 3) +
-  geom_text(data = pav_samps, aes(label = n), size = 2.5, position = position_dodge(0.4)) +
-  facet_wrap(~soil) +
-  scale_fill_manual(values = col_pal, name = "Nitrogen supply") +
-  ylab("BYDV-PAV incidence") +
-  coord_cartesian(ylim = c(-0.08, 1.18)) +
-  theme_def
-dev.off()
+  stat_summary(geom = "point", fun = "mean", size = 2, position = position_dodge(0.3)) +
+  facet_wrap(~soil)
 
-# RPV infection prevalence
-pdf("output/rpv_infection_figure.pdf", width = 4, height = 4.1)
-ggplot(rpv_dat, aes(inoculation, rpv, fill = nitrogen_added)) +
+ggplot(rpv_dat, aes(inoculation, rpv, color = nitrogen_added)) +
   stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.3)) +
-  stat_summary(geom = "point", fun = "mean", size = 2, position = position_dodge(0.3), shape = 21) +
-  geom_text(data = pan_labs, aes(label = label), hjust = 0, nudge_x = -0.55, parse = T, size = 3) +
-  geom_text(data = rpv_samps, aes(label = n), size = 2.5, position = position_dodge(0.4)) +
-  facet_wrap(~soil) +
-  scale_fill_manual(values = col_pal, name = "Nitrogen supply") +
-  ylab("CYDV-RPV incidence") +
-  coord_cartesian(ylim = c(-0.08, 1.18)) +
-  theme_def
-dev.off()
+  stat_summary(geom = "point", fun = "mean", size = 2, position = position_dodge(0.3)) +
+  facet_wrap(~soil)
 
-# Co-infection prevalence
-pdf("output/co_infection_figure.pdf", width = 4, height = 4)
-ggplot(co_dat, aes(nitrogen_added, coinfection)) +
-  stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0) +
-  stat_summary(geom = "point", fun = "mean", size = 2, shape = 21, fill = "black") +
-  geom_text(data = pan_labs, aes(label = label), hjust = 0, nudge_x = -0.55, parse = T, size = 3) +
-  geom_text(data = co_samps, aes(label = n), size = 2.5) +
-  facet_wrap(~soil) +
-  xlab("Nitrogen supply") +
-  ylab("Co-infection incidence") +
-  coord_cartesian(ylim = c(-0.08, 1.05)) +
-  theme_def +
-  theme(axis.title.x = element_text(size = 10, color="black"))
-dev.off()
+ggplot(co_dat, aes(nitrogen_added, coinfection, color = nitrogen_added)) +
+  stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.3)) +
+  stat_summary(geom = "point", fun = "mean", size = 2, position = position_dodge(0.3)) +
+  facet_wrap(~soil)
 
 
 #### PAV model ####
@@ -286,6 +212,157 @@ loo_compare(co_loo2, co_mic_loo1)
 # microbes model is preferred
 
 
+#### model output ####
+save(pav_mod2, file = "output/pav_bayesian_model_soil.rda")
+save(pav_mic_mod1, file = "output/pav_bayesian_model_microbes.rda")
+save(rpv_mod2, file = "output/rpv_bayesian_model_soil.rda")
+save(rpv_mic_mod1, file = "output/rpv_bayesian_model_microbes.rda")
+save(co_mod2, file = "output/co_bayesian_model_soil.rda")
+save(co_mic_mod1, file = "output/co_bayesian_model_microbes.rda")
+
+write_csv(tidy(summary(pav_mod2)$fixed), "output/pav_bayesian_model_soil.csv")
+write_csv(tidy(summary(pav_mic_mod1)$fixed), "output/pav_bayesian_model_microbes.csv")
+write_csv(tidy(summary(rpv_mod2)$fixed), "output/rpv_bayesian_model_soil.csv")
+write_csv(tidy(summary(rpv_mic_mod1)$fixed), "output/rpv_bayesian_model_microbes.csv")
+write_csv(tidy(summary(co_mod2)$fixed), "output/co_bayesian_model_soil.csv")
+write_csv(tidy(summary(co_mic_mod1)$fixed), "output/co_bayesian_model_microbes.csv")
+
+
+#### visualize ####
+
+#### start here ####
+
+# make sure all treatments are being extracted
+
+# posterior sample function
+post_fun <- function(mod){
+  
+  out <- posterior_samples(pav_mod2) %>%
+    as_tibble() %>%
+    rename_with(~ str_replace_all(., ":", "_")) %>%
+    transmute(sterile_0_0 = logit2prob(b_Intercept),
+              sterile_1_0 = logit2prob(b_Intercept + b_N_added),
+              sterile_0_1 = logit2prob(b_Intercept + b_inoc_rpv),
+              sterile_1_1 = logit2prob(b_Intercept + b_N_added + b_inoc_rpv + b_N_added_inoc_rpv),
+              ambientN_0_0 = logit2prob(b_Intercept + b_soilambientN),
+              ambientN_1_0 = logit2prob(b_Intercept + b_soilambientN + b_N_added + b_soilambientN_N_added),
+              ambientN_0_1 = logit2prob(b_Intercept + b_soilambientN + b_inoc_rpv + b_soilambientN_inoc_rpv),
+              ambientN_1_1 = logit2prob(b_Intercept + b_soilambientN + b_N_added + b_inoc_rpv + b_N_added_inoc_rpv + b_soilambientN_N_added + b_soilambientN_inoc_rpv + b_soilambientN_N_added_inoc_rpv),
+              lowN_0_0 = logit2prob(b_Intercept + b_soillowN),
+              lowN_1_0 = logit2prob(b_Intercept + b_soillowN + b_N_added + b_soillowN_N_added),
+              lowN_0_1 = logit2prob(b_Intercept + b_soillowN + b_inoc_rpv + b_soillowN_inoc_rpv),
+              lowN_1_1 = logit2prob(b_Intercept + b_soillowN + b_N_added + b_inoc_rpv + b_N_added_inoc_rpv + b_soillowN_N_added + b_soillowN_inoc_rpv + b_soillowN_N_added_inoc_rpv),
+              highN_0_0 = logit2prob(b_Intercept + b_soilhighN),
+              highN_1_0 = logit2prob(b_Intercept + b_soilhighN + b_N_added + b_soilhighN_N_added),
+              highN_0_1 = logit2prob(b_Intercept + b_soilhighN + b_inoc_rpv + b_soilhighN_inoc_rpv),
+              highN_1_1 = logit2prob(b_Intercept + b_soilhighN + b_N_added + b_inoc_rpv + b_N_added_inoc_rpv + b_soilhighN_N_added + b_soilhighN_inoc_rpv + b_soilhighN_N_added_inoc_rpv)) %>%
+    pivot_longer(cols = everything(),
+                 names_to = "treatment",
+                 values_to = "values") %>%
+    rowwise() %>%
+    mutate(soil = str_split(treatment, "_")[[1]][1],
+           N_added = str_split(treatment, "_")[[1]][2] %>% as.double(),
+           inoc = str_split(treatment, "_")[[1]][3] %>% as.double(),
+           nitrogen_added = ifelse(N_added == 1, "high", "low"),
+           inoculation = ifelse(inoc == 1, "Co-inoculation", "Single inoculation"))
+  
+  return(out)
+}
+
+# posterior samples
+pav_post <- post_fun(pav_mod2) %>%
+  rename(pav = values)
+
+# theme
+theme_def <- theme_bw() +
+  theme(axis.text.y = element_text(size = 7.5, color="black"),
+        axis.text.x = element_text(size = 7, color="black"),
+        axis.title.y = element_text(size = 10, color="black"),
+        axis.title.x = element_blank(),
+        panel.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size = 10),
+        legend.box.margin = margin(-10, -10, -10, -10),
+        legend.background = element_blank(),
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        strip.background = element_blank(),
+        strip.text = element_blank())
+
+# palettes
+col_pal = c("white", "black")
+
+# panel labels
+pan_labs <- tibble(soil = levels(dat2$soil) %>% fct_relevel("sterile", "ambient N", "low N"),
+                   label = c("(bold('a'))~sterile~soil",
+                             "(bold('b'))~ambient~N~microbes",
+                             "(bold('c'))~low~N~microbes",
+                             "(bold('d'))~high~N~microbes")) %>%
+  mutate(inoculation = "Single inoculation",
+         nitrogen_added = "low",
+         pav = 1.15,
+         rpv = 1.15,
+         coinfection = 1)
+
+# sample sizes
+# pav_samps <- pav_dat %>%
+#   group_by(soil, nitrogen_added, inoculation) %>%
+#   count() %>%
+#   mutate(pav = -0.05)
+# 
+# rpv_samps <- rpv_dat %>%
+#   group_by(soil, nitrogen_added, inoculation) %>%
+#   count() %>%
+#   mutate(rpv = -0.05)
+# 
+# co_samps <- co_dat %>%
+#   group_by(soil, nitrogen_added) %>%
+#   count() %>%
+#   mutate(coinfection = -0.05)
+
+# PAV infection prevalence
+# pdf("output/pav_infection_figure.pdf", width = 4, height = 4.1)
+ggplot(pav_post, aes(inoculation, pav, fill = nitrogen_added)) +
+  stat_halfeye() +
+  geom_text(data = pan_labs, aes(label = label), hjust = 0, nudge_x = -0.55, parse = T, size = 3) +
+  facet_wrap(~soil) +
+  scale_fill_manual(values = col_pal, name = "Nitrogen supply") +
+  ylab("BYDV-PAV incidence") +
+  theme_def
+# dev.off()
+
+# RPV infection prevalence
+pdf("output/rpv_infection_figure.pdf", width = 4, height = 4.1)
+ggplot(rpv_dat, aes(inoculation, rpv, fill = nitrogen_added)) +
+  stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.3)) +
+  stat_summary(geom = "point", fun = "mean", size = 2, position = position_dodge(0.3), shape = 21) +
+  geom_text(data = pan_labs, aes(label = label), hjust = 0, nudge_x = -0.55, parse = T, size = 3) +
+  geom_text(data = rpv_samps, aes(label = n), size = 2.5, position = position_dodge(0.4)) +
+  facet_wrap(~soil) +
+  scale_fill_manual(values = col_pal, name = "Nitrogen supply") +
+  ylab("CYDV-RPV incidence") +
+  coord_cartesian(ylim = c(-0.08, 1.18)) +
+  theme_def
+dev.off()
+
+# Co-infection prevalence
+pdf("output/co_infection_figure.pdf", width = 4, height = 4)
+ggplot(co_dat, aes(nitrogen_added, coinfection)) +
+  stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0) +
+  stat_summary(geom = "point", fun = "mean", size = 2, shape = 21, fill = "black") +
+  geom_text(data = pan_labs, aes(label = label), hjust = 0, nudge_x = -0.55, parse = T, size = 3) +
+  geom_text(data = co_samps, aes(label = n), size = 2.5) +
+  facet_wrap(~soil) +
+  xlab("Nitrogen supply") +
+  ylab("Co-infection incidence") +
+  coord_cartesian(ylim = c(-0.08, 1.05)) +
+  theme_def +
+  theme(axis.title.x = element_text(size = 10, color="black"))
+dev.off()
+
+
 #### values for text ####
 
 # PAV incidence
@@ -425,17 +502,3 @@ mean_hdi(co_mic_post1$icp)
 mean_hdi(co_mic_post1$mic_effect)
 
 
-#### output ####
-save(pav_mod2, file = "output/pav_bayesian_model_soil.rda")
-save(pav_mic_mod1, file = "output/pav_bayesian_model_microbes.rda")
-save(rpv_mod2, file = "output/rpv_bayesian_model_soil.rda")
-save(rpv_mic_mod1, file = "output/rpv_bayesian_model_microbes.rda")
-save(co_mod2, file = "output/co_bayesian_model_soil.rda")
-save(co_mic_mod1, file = "output/co_bayesian_model_microbes.rda")
-
-write_csv(tidy(summary(pav_mod2)$fixed), "output/pav_bayesian_model_soil.csv")
-write_csv(tidy(summary(pav_mic_mod1)$fixed), "output/pav_bayesian_model_microbes.csv")
-write_csv(tidy(summary(rpv_mod2)$fixed), "output/rpv_bayesian_model_soil.csv")
-write_csv(tidy(summary(rpv_mic_mod1)$fixed), "output/rpv_bayesian_model_microbes.csv")
-write_csv(tidy(summary(co_mod2)$fixed), "output/co_bayesian_model_soil.csv")
-write_csv(tidy(summary(co_mic_mod1)$fixed), "output/co_bayesian_model_microbes.csv")
