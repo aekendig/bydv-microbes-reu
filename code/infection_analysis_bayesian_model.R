@@ -230,15 +230,10 @@ write_csv(tidy(summary(co_mic_mod1)$fixed), "output/co_bayesian_model_microbes.c
 
 #### visualize ####
 
-#### start here ####
-
-# make sure all treatments are being extracted
-
 # posterior sample function
 post_fun <- function(mod){
   
-  out <- posterior_samples(pav_mod2) %>%
-    as_tibble() %>%
+  out <- as_draws_df(mod) %>%
     rename_with(~ str_replace_all(., ":", "_")) %>%
     transmute(sterile_0_0 = logit2prob(b_Intercept),
               sterile_1_0 = logit2prob(b_Intercept + b_N_added),
@@ -262,9 +257,14 @@ post_fun <- function(mod){
     rowwise() %>%
     mutate(soil = str_split(treatment, "_")[[1]][1],
            N_added = str_split(treatment, "_")[[1]][2] %>% as.double(),
-           inoc = str_split(treatment, "_")[[1]][3] %>% as.double(),
-           nitrogen_added = ifelse(N_added == 1, "high", "low"),
-           inoculation = ifelse(inoc == 1, "Co-inoculation", "Single inoculation"))
+           inoc = str_split(treatment, "_")[[1]][3] %>% as.double()) %>%
+    ungroup() %>%
+    mutate(soil = str_replace(soil, "N", " N"),
+           soil = fct_relevel(soil, "sterile", "ambient N", "low N"),
+           nitrogen_added = if_else(N_added == 1, "high", "low"),
+           nitrogen_added = fct_relevel(nitrogen_added, "low"),
+           inoculation = if_else(inoc == 1, "Co-inoculation", "Single inoculation"),
+           inoculation = fct_relevel(inoculation, "Single inoculation"))
   
   return(out)
 }
@@ -272,6 +272,8 @@ post_fun <- function(mod){
 # posterior samples
 pav_post <- post_fun(pav_mod2) %>%
   rename(pav = values)
+
+#### start here: RPV post and figure ####
 
 # theme
 theme_def <- theme_bw() +
@@ -291,9 +293,6 @@ theme_def <- theme_bw() +
         strip.background = element_blank(),
         strip.text = element_blank())
 
-# palettes
-col_pal = c("white", "black")
-
 # panel labels
 pan_labs <- tibble(soil = levels(dat2$soil) %>% fct_relevel("sterile", "ambient N", "low N"),
                    label = c("(bold('a'))~sterile~soil",
@@ -306,32 +305,18 @@ pan_labs <- tibble(soil = levels(dat2$soil) %>% fct_relevel("sterile", "ambient 
          rpv = 1.15,
          coinfection = 1)
 
-# sample sizes
-# pav_samps <- pav_dat %>%
-#   group_by(soil, nitrogen_added, inoculation) %>%
-#   count() %>%
-#   mutate(pav = -0.05)
-# 
-# rpv_samps <- rpv_dat %>%
-#   group_by(soil, nitrogen_added, inoculation) %>%
-#   count() %>%
-#   mutate(rpv = -0.05)
-# 
-# co_samps <- co_dat %>%
-#   group_by(soil, nitrogen_added) %>%
-#   count() %>%
-#   mutate(coinfection = -0.05)
-
 # PAV infection prevalence
-# pdf("output/pav_infection_figure.pdf", width = 4, height = 4.1)
-ggplot(pav_post, aes(inoculation, pav, fill = nitrogen_added)) +
-  stat_halfeye() +
-  geom_text(data = pan_labs, aes(label = label), hjust = 0, nudge_x = -0.55, parse = T, size = 3) +
+pdf("output/pav_infection_figure.pdf", width = 4, height = 4.1)
+ggplot(pav_post, aes(inoculation, pav, fill = nitrogen_added, color = nitrogen_added)) +
+  stat_dots(data = pav_dat, side = "left", dotsize = 0.05, alpha = 0.5, position = position_dodge(0.3)) +
+  stat_pointinterval(.width = 0.95, position = position_dodge(0.3), alpha = 0.7, size = 1.5) +
+  geom_text(data = pan_labs, aes(label = label), hjust = 0, nudge_x = -0.55, parse = T, size = 3, color = "black") +
   facet_wrap(~soil) +
-  scale_fill_manual(values = col_pal, name = "Nitrogen supply") +
+  scale_color_viridis_d(option = "plasma", end = 0.85, name = "Nitrogen supply") +
+  scale_fill_viridis_d(option = "plasma", end = 0.85, name = "Nitrogen supply") +
   ylab("BYDV-PAV incidence") +
   theme_def
-# dev.off()
+dev.off()
 
 # RPV infection prevalence
 pdf("output/rpv_infection_figure.pdf", width = 4, height = 4.1)
