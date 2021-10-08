@@ -30,11 +30,11 @@ dat2 <- dat %>%
          nitrogen_added = ifelse(nutrient == "Ctrl", "low", "high"),
          N_added = ifelse(nitrogen_added == "low", 0, 1),
          N_limit = ifelse(nitrogen_added == "low", 1, 0),
-         soil = recode(soil, Sterile = "sterile", A = "ambient N", D = "low N", H = "high N"),
-         soil_N = case_when(soil %in% c("sterile", "ambient N") ~ 0,
+         soil = recode(soil, Sterile = "non-inoculated", A = "ambient N", D = "low N", H = "high N"),
+         soil_N = case_when(soil %in% c("non-inoculated", "ambient N") ~ 0,
                             soil == "low N" ~ 34,
                             soil == "high N" ~ 272),
-         microbes = ifelse(soil == "sterile", 0, 1)) %>%
+         microbes = ifelse(soil == "non-inoculated", 0, 1)) %>%
   filter(!is.na(pav) & !is.na(rpv)) %>%
   select(-nutrient)
 # 6 samples untested

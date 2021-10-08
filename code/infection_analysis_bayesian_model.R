@@ -23,17 +23,17 @@ logit2prob <- function(x){
 
 # reorganize factor levels
 dat2 <- dat %>%
-  mutate(soil = fct_relevel(soil, "sterile", "ambient N", "low N"),
-         inoculation = case_when(disease %in% c("PAV", "RPV") ~ "Single inoculation",
-                                 disease == "Co" ~ "Co-inoculation",
-                                 disease == "Healthy" ~ "Mock inoculation") %>%
-           fct_relevel("Mock inoculation", "Single inoculation"),
+  mutate(soil = fct_relevel(soil, "non-inoculated", "ambient N", "low N"),
+         inoculation = case_when(disease %in% c("PAV", "RPV") ~ "single",
+                                 disease == "Co" ~ "co-inoculation",
+                                 disease == "Healthy" ~ "mock") %>%
+           fct_relevel("mock", "single"),
          nitrogen_added = fct_relevel(nitrogen_added, "low", "high"),
          coinfection = case_when(disease == "Co" & pav == 1 & rpv == 1 ~ 1,
                                  TRUE ~ 0),
-         microbes = ifelse(soil == "sterile", 0, 1),
-         microbes_f = ifelse(microbes == 0, "sterile", "microbes") %>%
-           fct_relevel("sterile"))
+         microbes = ifelse(soil == "non-inoculated", 0, 1),
+         microbes_f = ifelse(microbes == 0, "non-inoculated", "microbes") %>%
+           fct_relevel("non-inoculated"))
 
 # separate by virus
 pav_dat <- dat2 %>%
@@ -88,33 +88,33 @@ pav_mod2 <- update(pav_mod1, chains = 3)
 # check model
 summary(pav_mod2)
 plot(pav_mod2)
-pp_check(pav_mod2, nsamples = 50)
+pp_check(pav_mod2, ndraws = 50)
 
-# microbes model
-pav_mic_mod1 <- update(pav_mod2,
-                       newdata = pav_dat,
-                       formula = pav ~ microbes * N_added * inoc_rpv,
-                       prior = c(prior(normal(0, 10), class = Intercept),
-                                 prior(normal(0, 10), class = b)))
-
-# check model
-summary(pav_mic_mod1)
-plot(pav_mic_mod1)
-pp_check(pav_mic_mod1, nsamples = 50)
-
-# compare with loo
-pav_loo2 <- loo(pav_mod2, reloo = T)
-pav_loo2 
-# all k < 0.7 and elpd_loo <= 0.1
-# good model fit
-# reasonable to do model comparison
-pav_mic_loo1 <- loo(pav_mic_mod1)
-pav_mic_loo1 
-# all k < 0.7 and elpd_loo <= 0.1
-# good model fit
-# reasonable to do model comparison
-loo_compare(pav_loo2, pav_mic_loo1)
-# microbes model is slightly preferred
+# # microbes model
+# pav_mic_mod1 <- update(pav_mod2,
+#                        newdata = pav_dat,
+#                        formula = pav ~ microbes * N_added * inoc_rpv,
+#                        prior = c(prior(normal(0, 10), class = Intercept),
+#                                  prior(normal(0, 10), class = b)))
+# 
+# # check model
+# summary(pav_mic_mod1)
+# plot(pav_mic_mod1)
+# pp_check(pav_mic_mod1, nsamples = 50)
+# 
+# # compare with loo
+# pav_loo2 <- loo(pav_mod2, reloo = T)
+# pav_loo2 
+# # all k < 0.7 and elpd_loo <= 0.1
+# # good model fit
+# # reasonable to do model comparison
+# pav_mic_loo1 <- loo(pav_mic_mod1)
+# pav_mic_loo1 
+# # all k < 0.7 and elpd_loo <= 0.1
+# # good model fit
+# # reasonable to do model comparison
+# loo_compare(pav_loo2, pav_mic_loo1)
+# # microbes model is slightly preferred
 
 
 #### RPV model ####
@@ -134,34 +134,34 @@ rpv_mod2 <- update(rpv_mod1, chains = 3)
 # check model
 summary(rpv_mod2)
 plot(rpv_mod2)
-pp_check(rpv_mod2, nsamples = 50)
+pp_check(rpv_mod2, ndraws = 50)
 
-# microbes model
-rpv_mic_mod1 <- update(rpv_mod2,
-                       newdata = rpv_dat,
-                       formula = rpv ~ microbes * N_added * inoc_pav,
-                       prior = c(prior(normal(0, 10), class = Intercept),
-                                 prior(normal(0, 10), class = b)))
-
-# check model
-summary(rpv_mic_mod1)
-plot(rpv_mic_mod1)
-pp_check(rpv_mic_mod1, nsamples = 50)
-
-# compare with loo
-rpv_loo2 <- loo(rpv_mod2)
-rpv_loo2 
-# all k < 0.7 and elpd_loo <= 0.1
-# good model fit
-# reasonable to do model comparison
-rpv_mic_loo1 <- loo(rpv_mic_mod1, reloo = T)
-rpv_mic_loo1 
-# all k < 0.7
-# elpd_loo > 0.1, but still small compared to other SE
-# good model fit
-# reasonable to do model comparison
-loo_compare(rpv_loo2, rpv_mic_loo1)
-# microbes model is preferred
+# # microbes model
+# rpv_mic_mod1 <- update(rpv_mod2,
+#                        newdata = rpv_dat,
+#                        formula = rpv ~ microbes * N_added * inoc_pav,
+#                        prior = c(prior(normal(0, 10), class = Intercept),
+#                                  prior(normal(0, 10), class = b)))
+# 
+# # check model
+# summary(rpv_mic_mod1)
+# plot(rpv_mic_mod1)
+# pp_check(rpv_mic_mod1, nsamples = 50)
+# 
+# # compare with loo
+# rpv_loo2 <- loo(rpv_mod2)
+# rpv_loo2 
+# # all k < 0.7 and elpd_loo <= 0.1
+# # good model fit
+# # reasonable to do model comparison
+# rpv_mic_loo1 <- loo(rpv_mic_mod1, reloo = T)
+# rpv_mic_loo1 
+# # all k < 0.7
+# # elpd_loo > 0.1, but still small compared to other SE
+# # good model fit
+# # reasonable to do model comparison
+# loo_compare(rpv_loo2, rpv_mic_loo1)
+# # microbes model is preferred
 
 
 #### co-infection model ####
@@ -181,51 +181,51 @@ co_mod2 <- update(co_mod1, chains = 3)
 # check model
 summary(co_mod2)
 plot(co_mod2)
-pp_check(co_mod2, nsamples = 50)
+pp_check(co_mod2, ndraws = 50)
 
-# microbes model
-co_mic_mod1 <- update(co_mod2,
-                      newdata = co_dat,
-                      formula = coinfection ~ microbes * N_added,
-                      prior = c(prior(normal(0, 10), class = Intercept),
-                                prior(normal(0, 10), class = b)))
-
-# check model
-summary(co_mic_mod1)
-plot(co_mic_mod1)
-pp_check(co_mic_mod1, nsamples = 50)
-
-# compare with loo
-co_loo2 <- loo(co_mod2, reloo = T)
-co_loo2 
-# all k < 0.7 and elpd_loo <= 0.1
-# elpd_loo > 0.1, but still small compared to other SE
-# good model fit
-# reasonable to do model comparison
-co_mic_loo1 <- loo(co_mic_mod1, reloo = T)
-co_mic_loo1 
-# all k < 0.7
-# elpd_loo > 0.1, but still small compared to other SE
-# good model fit
-# reasonable to do model comparison
-loo_compare(co_loo2, co_mic_loo1)
-# microbes model is preferred
+# # microbes model
+# co_mic_mod1 <- update(co_mod2,
+#                       newdata = co_dat,
+#                       formula = coinfection ~ microbes * N_added,
+#                       prior = c(prior(normal(0, 10), class = Intercept),
+#                                 prior(normal(0, 10), class = b)))
+# 
+# # check model
+# summary(co_mic_mod1)
+# plot(co_mic_mod1)
+# pp_check(co_mic_mod1, nsamples = 50)
+# 
+# # compare with loo
+# co_loo2 <- loo(co_mod2, reloo = T)
+# co_loo2 
+# # all k < 0.7 and elpd_loo <= 0.1
+# # elpd_loo > 0.1, but still small compared to other SE
+# # good model fit
+# # reasonable to do model comparison
+# co_mic_loo1 <- loo(co_mic_mod1, reloo = T)
+# co_mic_loo1 
+# # all k < 0.7
+# # elpd_loo > 0.1, but still small compared to other SE
+# # good model fit
+# # reasonable to do model comparison
+# loo_compare(co_loo2, co_mic_loo1)
+# # microbes model is preferred
 
 
 #### model output ####
 save(pav_mod2, file = "output/pav_bayesian_model_soil.rda")
-save(pav_mic_mod1, file = "output/pav_bayesian_model_microbes.rda")
+# save(pav_mic_mod1, file = "output/pav_bayesian_model_microbes.rda")
 save(rpv_mod2, file = "output/rpv_bayesian_model_soil.rda")
-save(rpv_mic_mod1, file = "output/rpv_bayesian_model_microbes.rda")
+# save(rpv_mic_mod1, file = "output/rpv_bayesian_model_microbes.rda")
 save(co_mod2, file = "output/co_bayesian_model_soil.rda")
-save(co_mic_mod1, file = "output/co_bayesian_model_microbes.rda")
+# save(co_mic_mod1, file = "output/co_bayesian_model_microbes.rda")
 
 write_csv(tidy(summary(pav_mod2)$fixed), "output/pav_bayesian_model_soil.csv")
-write_csv(tidy(summary(pav_mic_mod1)$fixed), "output/pav_bayesian_model_microbes.csv")
+# write_csv(tidy(summary(pav_mic_mod1)$fixed), "output/pav_bayesian_model_microbes.csv")
 write_csv(tidy(summary(rpv_mod2)$fixed), "output/rpv_bayesian_model_soil.csv")
-write_csv(tidy(summary(rpv_mic_mod1)$fixed), "output/rpv_bayesian_model_microbes.csv")
+# write_csv(tidy(summary(rpv_mic_mod1)$fixed), "output/rpv_bayesian_model_microbes.csv")
 write_csv(tidy(summary(co_mod2)$fixed), "output/co_bayesian_model_soil.csv")
-write_csv(tidy(summary(co_mic_mod1)$fixed), "output/co_bayesian_model_microbes.csv")
+# write_csv(tidy(summary(co_mic_mod1)$fixed), "output/co_bayesian_model_microbes.csv")
 
 
 #### visualize ####
@@ -235,22 +235,24 @@ post_fun <- function(mod){
   
   out <- as_draws_df(mod) %>%
     rename_with(~ str_replace_all(., ":", "_")) %>%
-    transmute(sterile_0_0 = logit2prob(b_Intercept),
-              sterile_1_0 = logit2prob(b_Intercept + b_N_added),
-              sterile_0_1 = logit2prob(b_Intercept + b_inoc_rpv),
-              sterile_1_1 = logit2prob(b_Intercept + b_N_added + b_inoc_rpv + b_N_added_inoc_rpv),
+    rename_with(~ str_replace_all(., "rpv", "co")) %>%
+    rename_with(~ str_replace_all(., "pav", "co")) %>%
+    transmute(noninoculated_0_0 = logit2prob(b_Intercept),
+              noninoculated_1_0 = logit2prob(b_Intercept + b_N_added),
+              noninoculated_0_1 = logit2prob(b_Intercept + b_inoc_co),
+              noninoculated_1_1 = logit2prob(b_Intercept + b_N_added + b_inoc_co + b_N_added_inoc_co),
               ambientN_0_0 = logit2prob(b_Intercept + b_soilambientN),
               ambientN_1_0 = logit2prob(b_Intercept + b_soilambientN + b_N_added + b_soilambientN_N_added),
-              ambientN_0_1 = logit2prob(b_Intercept + b_soilambientN + b_inoc_rpv + b_soilambientN_inoc_rpv),
-              ambientN_1_1 = logit2prob(b_Intercept + b_soilambientN + b_N_added + b_inoc_rpv + b_N_added_inoc_rpv + b_soilambientN_N_added + b_soilambientN_inoc_rpv + b_soilambientN_N_added_inoc_rpv),
+              ambientN_0_1 = logit2prob(b_Intercept + b_soilambientN + b_inoc_co + b_soilambientN_inoc_co),
+              ambientN_1_1 = logit2prob(b_Intercept + b_soilambientN + b_N_added + b_inoc_co + b_N_added_inoc_co + b_soilambientN_N_added + b_soilambientN_inoc_co + b_soilambientN_N_added_inoc_co),
               lowN_0_0 = logit2prob(b_Intercept + b_soillowN),
               lowN_1_0 = logit2prob(b_Intercept + b_soillowN + b_N_added + b_soillowN_N_added),
-              lowN_0_1 = logit2prob(b_Intercept + b_soillowN + b_inoc_rpv + b_soillowN_inoc_rpv),
-              lowN_1_1 = logit2prob(b_Intercept + b_soillowN + b_N_added + b_inoc_rpv + b_N_added_inoc_rpv + b_soillowN_N_added + b_soillowN_inoc_rpv + b_soillowN_N_added_inoc_rpv),
+              lowN_0_1 = logit2prob(b_Intercept + b_soillowN + b_inoc_co + b_soillowN_inoc_co),
+              lowN_1_1 = logit2prob(b_Intercept + b_soillowN + b_N_added + b_inoc_co + b_N_added_inoc_co + b_soillowN_N_added + b_soillowN_inoc_co + b_soillowN_N_added_inoc_co),
               highN_0_0 = logit2prob(b_Intercept + b_soilhighN),
               highN_1_0 = logit2prob(b_Intercept + b_soilhighN + b_N_added + b_soilhighN_N_added),
-              highN_0_1 = logit2prob(b_Intercept + b_soilhighN + b_inoc_rpv + b_soilhighN_inoc_rpv),
-              highN_1_1 = logit2prob(b_Intercept + b_soilhighN + b_N_added + b_inoc_rpv + b_N_added_inoc_rpv + b_soilhighN_N_added + b_soilhighN_inoc_rpv + b_soilhighN_N_added_inoc_rpv)) %>%
+              highN_0_1 = logit2prob(b_Intercept + b_soilhighN + b_inoc_co + b_soilhighN_inoc_co),
+              highN_1_1 = logit2prob(b_Intercept + b_soilhighN + b_N_added + b_inoc_co + b_N_added_inoc_co + b_soilhighN_N_added + b_soilhighN_inoc_co + b_soilhighN_N_added_inoc_co)) %>%
     pivot_longer(cols = everything(),
                  names_to = "treatment",
                  values_to = "values") %>%
@@ -260,11 +262,12 @@ post_fun <- function(mod){
            inoc = str_split(treatment, "_")[[1]][3] %>% as.double()) %>%
     ungroup() %>%
     mutate(soil = str_replace(soil, "N", " N"),
-           soil = fct_relevel(soil, "sterile", "ambient N", "low N"),
+           soil = fct_relevel(soil, "noninoculated", "ambient N", "low N") %>%
+             fct_recode("non-inoculated" = "noninoculated"),
            nitrogen_added = if_else(N_added == 1, "high", "low"),
            nitrogen_added = fct_relevel(nitrogen_added, "low"),
-           inoculation = if_else(inoc == 1, "Co-inoculation", "Single inoculation"),
-           inoculation = fct_relevel(inoculation, "Single inoculation"))
+           inoculation = if_else(inoc == 1, "co-inoculation", "single"),
+           inoculation = fct_relevel(inoculation, "single"))
   
   return(out)
 }
@@ -273,14 +276,17 @@ post_fun <- function(mod){
 pav_post <- post_fun(pav_mod2) %>%
   rename(pav = values)
 
-#### start here: RPV post and figure ####
+rpv_post <- post_fun(rpv_mod2) %>%
+  rename(rpv = values)
+
+#### start here: co post and figure ####
 
 # theme
 theme_def <- theme_bw() +
-  theme(axis.text.y = element_text(size = 7.5, color="black"),
-        axis.text.x = element_text(size = 7, color="black"),
+  theme(axis.text.y = element_text(size = 8, color="black"),
+        axis.text.x = element_text(size = 8, color="black"),
         axis.title.y = element_text(size = 10, color="black"),
-        axis.title.x = element_blank(),
+        axis.title.x = element_text(size = 10, color="black"),
         panel.background = element_blank(),
         panel.grid.major = element_blank(),
         panel.grid.minor = element_blank(),
@@ -288,47 +294,44 @@ theme_def <- theme_bw() +
         legend.title = element_text(size = 10),
         legend.box.margin = margin(-10, -10, -10, -10),
         legend.background = element_blank(),
-        legend.position = "bottom",
-        legend.direction = "horizontal",
+        # legend.position = "bottom",
+        # legend.direction = "horizontal",
         strip.background = element_blank(),
         strip.text = element_blank())
 
 # panel labels
-pan_labs <- tibble(soil = levels(dat2$soil) %>% fct_relevel("sterile", "ambient N", "low N"),
-                   label = c("(bold('a'))~sterile~soil",
-                             "(bold('b'))~ambient~N~microbes",
-                             "(bold('c'))~low~N~microbes",
-                             "(bold('d'))~high~N~microbes")) %>%
-  mutate(inoculation = "Single inoculation",
-         nitrogen_added = "low",
-         pav = 1.15,
-         rpv = 1.15,
-         coinfection = 1)
+# pan_labs <- tibble(soil = levels(dat2$soil) %>% fct_relevel("sterile", "ambient N", "low N"),
+#                    label = c("(bold('a'))~sterile~soil",
+#                              "(bold('b'))~ambient~N~microbes",
+#                              "(bold('c'))~low~N~microbes",
+#                              "(bold('d'))~high~N~microbes")) %>%
+#   mutate(inoculation = "Single inoculation",
+#          nitrogen_added = "low",
+#          pav = 1.15,
+#          rpv = 1.15,
+#          coinfection = 1)
 
 # PAV infection prevalence
-pdf("output/pav_infection_figure.pdf", width = 4, height = 4.1)
-ggplot(pav_post, aes(inoculation, pav, fill = nitrogen_added, color = nitrogen_added)) +
-  stat_dots(data = pav_dat, side = "left", dotsize = 0.05, alpha = 0.5, position = position_dodge(0.3)) +
-  stat_pointinterval(.width = 0.95, position = position_dodge(0.3), alpha = 0.7, size = 1.5) +
-  geom_text(data = pan_labs, aes(label = label), hjust = 0, nudge_x = -0.55, parse = T, size = 3, color = "black") +
-  facet_wrap(~soil) +
-  scale_color_viridis_d(option = "plasma", end = 0.85, name = "Nitrogen supply") +
-  scale_fill_viridis_d(option = "plasma", end = 0.85, name = "Nitrogen supply") +
-  ylab("BYDV-PAV incidence") +
+tiff("output/Figure_1.tiff", width = 180, height = 90, units = "mm", res = 300, compression = "lzw")
+ggplot(pav_post, aes(soil, pav, fill = nitrogen_added, color = nitrogen_added, shape = inoculation, group = interaction(nitrogen_added, inoculation))) +
+  geom_point(data = pav_dat, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.5)) +
+  stat_pointinterval(.width = 0.95, position = position_dodge(0.5), alpha = 0.7, point_size = 2.5, interval_size = 0.75) +
+  scale_color_viridis_d(begin = 0.3, end = 0.7, name = "Nitrogen supply") +
+  scale_fill_viridis_d(begin = 0.3, end = 0.7, name = "Nitrogen supply") +
+  scale_shape(name = "Virus inoculation") +
+  labs(x = "Field soil treatment", y = "BYDV-PAV incidence") +
   theme_def
 dev.off()
 
 # RPV infection prevalence
-pdf("output/rpv_infection_figure.pdf", width = 4, height = 4.1)
-ggplot(rpv_dat, aes(inoculation, rpv, fill = nitrogen_added)) +
-  stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.3)) +
-  stat_summary(geom = "point", fun = "mean", size = 2, position = position_dodge(0.3), shape = 21) +
-  geom_text(data = pan_labs, aes(label = label), hjust = 0, nudge_x = -0.55, parse = T, size = 3) +
-  geom_text(data = rpv_samps, aes(label = n), size = 2.5, position = position_dodge(0.4)) +
-  facet_wrap(~soil) +
-  scale_fill_manual(values = col_pal, name = "Nitrogen supply") +
-  ylab("CYDV-RPV incidence") +
-  coord_cartesian(ylim = c(-0.08, 1.18)) +
+tiff("output/Figure_2.tiff", width = 180, height = 90, units = "mm", res = 300, compression = "lzw")
+ggplot(rpv_post, aes(soil, rpv, fill = nitrogen_added, color = nitrogen_added, shape = inoculation, group = interaction(nitrogen_added, inoculation))) +
+  geom_point(data = rpv_dat, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.5)) +
+  stat_pointinterval(.width = 0.95, position = position_dodge(0.5), alpha = 0.7, point_size = 2.5, interval_size = 0.75) +
+  scale_color_viridis_d(begin = 0.3, end = 0.7, name = "Nitrogen supply") +
+  scale_fill_viridis_d(begin = 0.3, end = 0.7, name = "Nitrogen supply") +
+  scale_shape(name = "Virus inoculation") +
+  labs(x = "Field soil treatment", y = "CYDV-RPV incidence") +
   theme_def
 dev.off()
 
