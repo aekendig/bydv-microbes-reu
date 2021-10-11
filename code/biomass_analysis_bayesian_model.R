@@ -18,7 +18,7 @@ dat <- read_csv("intermediate-data/bydv_microbes_data_rounded_up.csv")
 # reorganize factor levels
 # select for successful infection
 dat2 <- dat %>%
-  mutate(soil = fct_relevel(soil, "sterile", "ambient N", "low N"),
+  mutate(soil = fct_relevel(soil, "non-inoculated", "ambient N", "low N"),
          infection = case_when(disease == "PAV" & pav == 1 ~ "PAV infection",
                                disease == "RPV" & rpv == 1 ~ "RPV infection",
                                disease == "Co" & pav == 1 & rpv == 1 ~ "Co-infection",
@@ -32,9 +32,9 @@ dat2 <- dat %>%
                                 "Mock inoculation" = "mock"),
          nitrogen_added = fct_relevel(nitrogen_added, "low", "high"),
          log_biomass = log(biomass),
-         microbes = ifelse(soil == "sterile", 0, 1),
-         microbes_f = ifelse(microbes == 0, "sterile", "microbes") %>%
-           fct_relevel("sterile")) %>%
+         microbes = ifelse(soil == "non-inoculated", 0, 1),
+         microbes_f = ifelse(microbes == 0, "non-inoculated", "microbes") %>%
+           fct_relevel("non-inoculated")) %>%
   filter(!is.na(infection))
 
 # replicates
@@ -49,65 +49,17 @@ dat3 <- dat2 %>%
   filter(infection != "Co-infection")
 
 
-#### visualize ####
+#### initial visualization ####
 
-# small figures: 80 mm, large figures: 180 mm
-
-# theme
-theme_def <- theme_bw() +
-  theme(axis.text = element_text(size = 8, color="black"),
-        axis.title = element_text(size = 10, color="black"),
-        panel.background = element_blank(),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank(),
-        legend.text = element_text(size = 8),
-        legend.title = element_text(size = 10),
-        legend.box.margin = margin(-10, -10, -10, -10),
-        legend.background = element_blank(),
-        legend.position = "bottom",
-        legend.direction = "horizontal",
-        strip.background = element_blank(),
-        strip.text = element_blank())
-
-# palettes
-col_pal = c("white", "black")
-
-# panel labels
-pan_labs <- tibble(soil = levels(dat2$soil) %>% fct_relevel("sterile", "ambient N", "low N"),
-                   label = c("(bold('a'))~sterile~soil",
-                             "(bold('b'))~ambient~N~microbes",
-                             "(bold('c'))~low~N~microbes",
-                             "(bold('d'))~high~N~microbes")) %>%
-  mutate(infection_abb = "mock",
-         nitrogen_added = "low",
-         biomass = 0.7)
-
-# sample sizes
-bio_samps <- dat2 %>%
-  group_by(soil, nitrogen_added, infection_abb) %>%
-  count() %>%
-  mutate(biomass = 0.05)
-
-# figure
-pdf("output/biomass_figure.pdf", width = 4, height = 4.2)
 ggplot(dat2, aes(infection_abb, biomass, fill = nitrogen_added)) +
   stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0, position = position_dodge(0.3)) +
-  stat_summary(geom = "point", fun = "mean", size = 2, position = position_dodge(0.3), shape = 21) +
-  geom_text(data = pan_labs, aes(label = label), hjust = 0, nudge_x = -0.55, parse = T, size = 3) +
-  geom_text(data = bio_samps, aes(label = n), size = 2.5, position = position_dodge(0.4)) +
-  facet_wrap(~soil) +
-  scale_fill_manual(values = col_pal, name = "Nitrogen supply") +
-  xlab("Infection") +
-  ylab("Biomass [g/plant]") +
-  coord_cartesian(ylim = c(0.05, 0.71)) +
-  theme_def
-dev.off()
+  stat_summary(geom = "point", fun = "mean", size = 2, position = position_dodge(0.3), shape = 21)
 
 
 #### biomass model ####
 
 # initial fit
-bio_mod1 <- brm(log_biomass ~ soil * N_added * infection, 
+bio_mod1 <- brm(log_biomass ~ soil * N_added * infection_abb, 
                 data = dat3,
                 family = gaussian,
                 prior = c(prior(normal(0, 10), class = Intercept),
@@ -123,31 +75,116 @@ summary(bio_mod2)
 plot(bio_mod2)
 pp_check(bio_mod2, nsamples = 50)
 
-# microbes model
-bio_mic_mod1 <- update(bio_mod2,
-                       newdata = dat3,
-                       formula = log_biomass ~ microbes * N_added * infection,
-                       prior = c(prior(normal(0, 10), class = Intercept),
-                                 prior(normal(0, 10), class = b)))
+# # microbes model
+# bio_mic_mod1 <- update(bio_mod2,
+#                        newdata = dat3,
+#                        formula = log_biomass ~ microbes * N_added * infection,
+#                        prior = c(prior(normal(0, 10), class = Intercept),
+#                                  prior(normal(0, 10), class = b)))
+# 
+# # check model
+# summary(bio_mic_mod1)
+# plot(bio_mic_mod1)
+# pp_check(bio_mic_mod1, nsamples = 50)
+# 
+# # compare with loo
+# bio_loo2 <- loo(bio_mod2)
+# bio_loo2 
+# # all k < 0.7 and elpd_loo <= 0.1
+# # good model fit
+# # reasonable to do model comparison
+# bio_mic_loo1 <- loo(bio_mic_mod1)
+# bio_mic_loo1 
+# # all k < 0.7 and elpd_loo <= 0.1
+# # good model fit
+# # reasonable to do model comparison
+# loo_compare(bio_loo2, bio_mic_loo1)
+# # microbes model is preferred
 
-# check model
-summary(bio_mic_mod1)
-plot(bio_mic_mod1)
-pp_check(bio_mic_mod1, nsamples = 50)
+# save models
+save(bio_mod2, file = "output/bio_bayesian_model_soil.rda")
+# save(bio_mic_mod1, file = "output/bio_bayesian_model_microbes.rda")
 
-# compare with loo
-bio_loo2 <- loo(bio_mod2)
-bio_loo2 
-# all k < 0.7 and elpd_loo <= 0.1
-# good model fit
-# reasonable to do model comparison
-bio_mic_loo1 <- loo(bio_mic_mod1)
-bio_mic_loo1 
-# all k < 0.7 and elpd_loo <= 0.1
-# good model fit
-# reasonable to do model comparison
-loo_compare(bio_loo2, bio_mic_loo1)
-# microbes model is preferred
+write_csv(tidy(summary(bio_mod2)$fixed), "output/bio_bayesian_model_soil.csv")
+# write_csv(tidy(summary(bio_mic_mod1)$fixed), "output/bio_bayesian_model_microbes.csv")
+
+
+#### visualize ####
+
+# posterior dist
+bio_post <- as_draws_df(bio_mod2) %>%
+  rename_with(~ str_replace_all(., ":", "_")) %>%
+  transmute(noninoculated_0_mock = exp(b_Intercept),
+            noninoculated_1_mock = exp(b_Intercept + b_N_added),
+            noninoculated_0_PAV = exp(b_Intercept + b_infection_abbPAV),
+            noninoculated_1_PAV = exp(b_Intercept + b_N_added + b_infection_abbPAV + b_N_added_infection_abbPAV),
+            noninoculated_0_RPV = exp(b_Intercept + b_infection_abbRPV),
+            noninoculated_1_RPV = exp(b_Intercept + b_N_added + b_infection_abbRPV + b_N_added_infection_abbRPV),
+            ambientN_0_mock = exp(b_Intercept + b_soilambientN),
+            ambientN_1_mock = exp(b_Intercept + b_soilambientN + b_N_added + b_soilambientN_N_added),
+            ambientN_0_PAV = exp(b_Intercept + b_soilambientN + b_infection_abbPAV + b_soilambientN_infection_abbPAV),
+            ambientN_1_PAV = exp(b_Intercept + b_soilambientN + b_N_added + b_infection_abbPAV + b_N_added_infection_abbPAV + b_soilambientN_N_added + b_soilambientN_infection_abbPAV + b_soilambientN_N_added_infection_abbPAV),
+            ambientN_0_RPV = exp(b_Intercept + b_soilambientN + b_infection_abbRPV + b_soilambientN_infection_abbRPV),
+            ambientN_1_RPV = exp(b_Intercept + b_soilambientN + b_N_added + b_infection_abbRPV + b_N_added_infection_abbRPV + b_soilambientN_N_added + b_soilambientN_infection_abbRPV + b_soilambientN_N_added_infection_abbRPV),
+            lowN_0_mock = exp(b_Intercept + b_soillowN),
+            lowN_1_mock = exp(b_Intercept + b_soillowN + b_N_added + b_soillowN_N_added),
+            lowN_0_PAV = exp(b_Intercept + b_soillowN + b_infection_abbPAV + b_soillowN_infection_abbPAV),
+            lowN_1_PAV = exp(b_Intercept + b_soillowN + b_N_added + b_infection_abbPAV + b_N_added_infection_abbPAV + b_soillowN_N_added + b_soillowN_infection_abbPAV + b_soillowN_N_added_infection_abbPAV),
+            lowN_0_RPV = exp(b_Intercept + b_soillowN + b_infection_abbRPV + b_soillowN_infection_abbRPV),
+            lowN_1_RPV = exp(b_Intercept + b_soillowN + b_N_added + b_infection_abbRPV + b_N_added_infection_abbRPV + b_soillowN_N_added + b_soillowN_infection_abbRPV + b_soillowN_N_added_infection_abbRPV),
+            highN_0_mock = exp(b_Intercept + b_soilhighN),
+            highN_1_mock = exp(b_Intercept + b_soilhighN + b_N_added + b_soilhighN_N_added),
+            highN_0_PAV = exp(b_Intercept + b_soilhighN + b_infection_abbPAV + b_soilhighN_infection_abbPAV),
+            highN_1_PAV = exp(b_Intercept + b_soilhighN + b_N_added + b_infection_abbPAV + b_N_added_infection_abbPAV + b_soilhighN_N_added + b_soilhighN_infection_abbPAV + b_soilhighN_N_added_infection_abbPAV),
+            highN_0_RPV = exp(b_Intercept + b_soilhighN + b_infection_abbRPV + b_soilhighN_infection_abbRPV),
+            highN_1_RPV = exp(b_Intercept + b_soilhighN + b_N_added + b_infection_abbRPV + b_N_added_infection_abbRPV + b_soilhighN_N_added + b_soilhighN_infection_abbRPV + b_soilhighN_N_added_infection_abbRPV)) %>%
+  pivot_longer(cols = everything(),
+               names_to = "treatment",
+               values_to = "biomass") %>%
+  rowwise() %>%
+  mutate(soil = str_split(treatment, "_")[[1]][1],
+         N_added = str_split(treatment, "_")[[1]][2] %>% as.double(),
+         infection_abb = str_split(treatment, "_")[[1]][3]) %>%
+  ungroup() %>%
+  mutate(soil = str_replace(soil, "N", " N"),
+         soil = fct_relevel(soil, "noninoculated", "ambient N", "low N") %>%
+           fct_recode("non-inoculated" = "noninoculated"),
+         nitrogen_added = if_else(N_added == 1, "high", "low"),
+         nitrogen_added = fct_relevel(nitrogen_added, "low"))
+
+# theme
+theme_def <- theme_bw() +
+  theme(axis.text = element_text(size = 8, color="black"),
+        axis.title = element_text(size = 10, color="black"),
+        panel.background = element_blank(),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        legend.text = element_text(size = 8),
+        legend.title = element_text(size = 10),
+        legend.box.margin = margin(-10, -10, -10, -10),
+        legend.background = element_blank(),
+        strip.background = element_blank(),
+        strip.text = element_blank())
+
+# palettes
+col_pal = c("white", "black")
+
+#### start here ####
+# standardize shapes across figures
+# make infection figures smaller
+# maybe use shape for N and color for infection
+
+# figure
+tiff("output/Figure_4.tiff", width = 180, height = 90, units = "mm", res = 300, compression = "lzw")
+ggplot(bio_post, aes(soil, biomass, fill = nitrogen_added, color = nitrogen_added, shape = infection_abb, group = interaction(nitrogen_added, infection_abb))) +
+  geom_point(data = dat3, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.5)) +
+  stat_pointinterval(.width = 0.95, position = position_dodge(0.5), alpha = 0.7, point_size = 2.5, interval_size = 0.75) +
+  scale_color_viridis_d(begin = 0.3, end = 0.7, name = "Nitrogen supply") +
+  scale_fill_viridis_d(begin = 0.3, end = 0.7, name = "Nitrogen supply") +
+  scale_shape(name = "Virus infection") +
+  labs(x = "Field soil treatment", y = "Biomass (g)") +
+  theme_def
+dev.off()
 
 
 #### values for text ####
@@ -313,14 +350,6 @@ y2 %>%
                          lower > 0 & upper > 0 ~ 1,
                          TRUE ~ 0)) %>%
   summarise(power = sum(sig) / n_sim)
-
-
-#### output ####
-save(bio_mod2, file = "output/bio_bayesian_model_soil.rda")
-save(bio_mic_mod1, file = "output/bio_bayesian_model_microbes.rda")
-
-write_csv(tidy(summary(bio_mod2)$fixed), "output/bio_bayesian_model_soil.csv")
-write_csv(tidy(summary(bio_mic_mod1)$fixed), "output/bio_bayesian_model_microbes.csv")
 
 write_csv(s2, "output/simulated_datasets_1x_samp_size.csv")
 write_csv(v2, "output/simulated_datasets_2x_samp_size.csv")

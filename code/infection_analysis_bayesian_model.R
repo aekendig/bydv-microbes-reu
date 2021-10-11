@@ -279,7 +279,28 @@ pav_post <- post_fun(pav_mod2) %>%
 rpv_post <- post_fun(rpv_mod2) %>%
   rename(rpv = values)
 
-#### start here: co post and figure ####
+co_post <- as_draws_df(co_mod2) %>%
+  rename_with(~ str_replace_all(., ":", "_")) %>%
+  transmute(noninoculated_0 = logit2prob(b_Intercept),
+            noninoculated_1 = logit2prob(b_Intercept + b_N_added),
+            ambientN_0 = logit2prob(b_Intercept + b_soilambientN),
+            ambientN_1 = logit2prob(b_Intercept + b_soilambientN + b_N_added + b_soilambientN_N_added),
+            lowN_0 = logit2prob(b_Intercept + b_soillowN),
+            lowN_1 = logit2prob(b_Intercept + b_soillowN + b_N_added + b_soillowN_N_added),
+            highN_0 = logit2prob(b_Intercept + b_soilhighN),
+            highN_1 = logit2prob(b_Intercept + b_soilhighN + b_N_added + b_soilhighN_N_added)) %>%
+  pivot_longer(cols = everything(),
+               names_to = "treatment",
+               values_to = "coinfection") %>%
+  rowwise() %>%
+  mutate(soil = str_split(treatment, "_")[[1]][1],
+         N_added = str_split(treatment, "_")[[1]][2] %>% as.double()) %>%
+  ungroup() %>%
+  mutate(soil = str_replace(soil, "N", " N"),
+         soil = fct_relevel(soil, "noninoculated", "ambient N", "low N") %>%
+           fct_recode("non-inoculated" = "noninoculated"),
+         nitrogen_added = if_else(N_added == 1, "high", "low"),
+         nitrogen_added = fct_relevel(nitrogen_added, "low"))
 
 # theme
 theme_def <- theme_bw() +
@@ -298,18 +319,6 @@ theme_def <- theme_bw() +
         # legend.direction = "horizontal",
         strip.background = element_blank(),
         strip.text = element_blank())
-
-# panel labels
-# pan_labs <- tibble(soil = levels(dat2$soil) %>% fct_relevel("sterile", "ambient N", "low N"),
-#                    label = c("(bold('a'))~sterile~soil",
-#                              "(bold('b'))~ambient~N~microbes",
-#                              "(bold('c'))~low~N~microbes",
-#                              "(bold('d'))~high~N~microbes")) %>%
-#   mutate(inoculation = "Single inoculation",
-#          nitrogen_added = "low",
-#          pav = 1.15,
-#          rpv = 1.15,
-#          coinfection = 1)
 
 # PAV infection prevalence
 tiff("output/Figure_1.tiff", width = 180, height = 90, units = "mm", res = 300, compression = "lzw")
@@ -336,18 +345,14 @@ ggplot(rpv_post, aes(soil, rpv, fill = nitrogen_added, color = nitrogen_added, s
 dev.off()
 
 # Co-infection prevalence
-pdf("output/co_infection_figure.pdf", width = 4, height = 4)
-ggplot(co_dat, aes(nitrogen_added, coinfection)) +
-  stat_summary(geom = "errorbar", fun.data = "mean_cl_boot", width = 0) +
-  stat_summary(geom = "point", fun = "mean", size = 2, shape = 21, fill = "black") +
-  geom_text(data = pan_labs, aes(label = label), hjust = 0, nudge_x = -0.55, parse = T, size = 3) +
-  geom_text(data = co_samps, aes(label = n), size = 2.5) +
-  facet_wrap(~soil) +
-  xlab("Nitrogen supply") +
-  ylab("Co-infection incidence") +
-  coord_cartesian(ylim = c(-0.08, 1.05)) +
-  theme_def +
-  theme(axis.title.x = element_text(size = 10, color="black"))
+tiff("output/Figure_3.tiff", width = 140, height = 90, units = "mm", res = 300, compression = "lzw")
+ggplot(co_post, aes(x = soil, y = coinfection, fill = nitrogen_added, color = nitrogen_added)) +
+  geom_point(data = co_dat, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.25), shape = 17) +
+  stat_pointinterval(.width = 0.95, position = position_dodge(0.25), alpha = 0.7, point_size = 2.5, interval_size = 0.75, shape = 17) +
+  scale_color_viridis_d(begin = 0.3, end = 0.7, name = "Nitrogen supply") +
+  scale_fill_viridis_d(begin = 0.3, end = 0.7, name = "Nitrogen supply") +
+  labs(x = "Field soil treatment", y = "Co-infection incidence") +
+  theme_def
 dev.off()
 
 
