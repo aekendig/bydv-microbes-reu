@@ -5,10 +5,10 @@ rm(list = ls())
 
 # load packages
 library(tidyverse)
-library(cowplot)
 library(broom)
 library(brms)
 library(tidybayes)
+library(scales)
 
 # import data
 dat <- read_csv("intermediate-data/bydv_microbes_data_rounded_up.csv")
@@ -320,37 +320,44 @@ theme_def <- theme_bw() +
         strip.background = element_blank(),
         strip.text = element_blank())
 
+col_pal <- viridis_pal(direction = -1)(4)
+
 # PAV infection prevalence
-tiff("output/Figure_1.tiff", width = 180, height = 90, units = "mm", res = 300, compression = "lzw")
-ggplot(pav_post, aes(soil, pav, fill = nitrogen_added, color = nitrogen_added, shape = inoculation, group = interaction(nitrogen_added, inoculation))) +
+tiff("output/Figure_1.tiff", width = 160, height = 90, units = "mm", res = 300, compression = "lzw")
+ggplot(pav_post, aes(soil, pav, shape = nitrogen_added, color = inoculation, fill = inoculation, group = interaction(nitrogen_added, inoculation))) +
   geom_point(data = pav_dat, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.5)) +
   stat_pointinterval(.width = 0.95, position = position_dodge(0.5), alpha = 0.7, point_size = 2.5, interval_size = 0.75) +
-  scale_color_viridis_d(begin = 0.3, end = 0.7, name = "Nitrogen supply") +
-  scale_fill_viridis_d(begin = 0.3, end = 0.7, name = "Nitrogen supply") +
-  scale_shape(name = "Virus inoculation") +
+  scale_color_manual(values = col_pal[2:3], name = "Virus inoculation",
+                     labels = c("PAV", "co-inoculation")) +
+  scale_fill_manual(values = col_pal[2:3], name = "Virus inoculation",
+                    labels = c("PAV", "co-inoculation")) +
+  scale_shape(name = "Nitrogen supply") +
   labs(x = "Field soil treatment", y = "BYDV-PAV incidence") +
   theme_def
 dev.off()
 
 # RPV infection prevalence
-tiff("output/Figure_2.tiff", width = 180, height = 90, units = "mm", res = 300, compression = "lzw")
-ggplot(rpv_post, aes(soil, rpv, fill = nitrogen_added, color = nitrogen_added, shape = inoculation, group = interaction(nitrogen_added, inoculation))) +
+tiff("output/Figure_2.tiff", width = 160, height = 90, units = "mm", res = 300, compression = "lzw")
+ggplot(rpv_post, aes(soil, rpv, shape = nitrogen_added, color = inoculation, fill = inoculation, group = interaction(nitrogen_added, inoculation))) +
   geom_point(data = rpv_dat, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.5)) +
   stat_pointinterval(.width = 0.95, position = position_dodge(0.5), alpha = 0.7, point_size = 2.5, interval_size = 0.75) +
-  scale_color_viridis_d(begin = 0.3, end = 0.7, name = "Nitrogen supply") +
-  scale_fill_viridis_d(begin = 0.3, end = 0.7, name = "Nitrogen supply") +
-  scale_shape(name = "Virus inoculation") +
+  scale_color_manual(values = col_pal[c(4,3)], name = "Virus inoculation",
+                     labels = c("RPV", "co-inoculation")) +
+  scale_fill_manual(values = col_pal[c(4,3)], name = "Virus inoculation",
+                    labels = c("RPV", "co-inoculation")) +
+  scale_shape(name = "Nitrogen supply") +
   labs(x = "Field soil treatment", y = "CYDV-RPV incidence") +
-  theme_def
+  theme_def +
+  guides(shape = guide_legend(order = 2), col = guide_legend(order = 1), 
+         fill = guide_legend(order = 1))
 dev.off()
 
 # Co-infection prevalence
 tiff("output/Figure_3.tiff", width = 140, height = 90, units = "mm", res = 300, compression = "lzw")
-ggplot(co_post, aes(x = soil, y = coinfection, fill = nitrogen_added, color = nitrogen_added)) +
-  geom_point(data = co_dat, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.25), shape = 17) +
-  stat_pointinterval(.width = 0.95, position = position_dodge(0.25), alpha = 0.7, point_size = 2.5, interval_size = 0.75, shape = 17) +
-  scale_color_viridis_d(begin = 0.3, end = 0.7, name = "Nitrogen supply") +
-  scale_fill_viridis_d(begin = 0.3, end = 0.7, name = "Nitrogen supply") +
+ggplot(co_post, aes(x = soil, y = coinfection, shape = nitrogen_added)) +
+  geom_point(data = co_dat, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.25), color = col_pal[3]) +
+  stat_pointinterval(.width = 0.95, position = position_dodge(0.25), alpha = 0.7, point_size = 2.5, interval_size = 0.75, color = col_pal[3], fill = col_pal[3]) +
+  scale_shape(name = "Nitrogen supply") +
   labs(x = "Field soil treatment", y = "Co-infection incidence") +
   theme_def
 dev.off()

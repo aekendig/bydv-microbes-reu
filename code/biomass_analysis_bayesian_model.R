@@ -8,6 +8,7 @@ library(tidyverse)
 library(broom)
 library(brms)
 library(tidybayes)
+library(scales)
 
 # import data
 dat <- read_csv("intermediate-data/bydv_microbes_data_rounded_up.csv")
@@ -166,22 +167,16 @@ theme_def <- theme_bw() +
         strip.background = element_blank(),
         strip.text = element_blank())
 
-# palettes
-col_pal = c("white", "black")
-
-#### start here ####
-# standardize shapes across figures
-# make infection figures smaller
-# maybe use shape for N and color for infection
+col_pal <- viridis_pal(direction = -1)(4)
 
 # figure
 tiff("output/Figure_4.tiff", width = 180, height = 90, units = "mm", res = 300, compression = "lzw")
-ggplot(bio_post, aes(soil, biomass, fill = nitrogen_added, color = nitrogen_added, shape = infection_abb, group = interaction(nitrogen_added, infection_abb))) +
-  geom_point(data = dat3, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.5)) +
-  stat_pointinterval(.width = 0.95, position = position_dodge(0.5), alpha = 0.7, point_size = 2.5, interval_size = 0.75) +
-  scale_color_viridis_d(begin = 0.3, end = 0.7, name = "Nitrogen supply") +
-  scale_fill_viridis_d(begin = 0.3, end = 0.7, name = "Nitrogen supply") +
-  scale_shape(name = "Virus infection") +
+ggplot(bio_post, aes(soil, biomass, shape = nitrogen_added, color = infection_abb, fill = infection_abb, group = interaction(nitrogen_added, infection_abb))) +
+  geom_point(data = dat3, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.6)) +
+  stat_pointinterval(.width = 0.95, position = position_dodge(0.6), alpha = 0.7, point_size = 2.5, interval_size = 0.75) +
+  scale_color_manual(values = col_pal[c(1,2,4)], name = "Virus infection") +
+  scale_fill_manual(values = col_pal[c(1,2,4)], name = "Virus infection") +
+  scale_shape(name = "Nitrogen supply") +
   labs(x = "Field soil treatment", y = "Biomass (g)") +
   theme_def
 dev.off()
