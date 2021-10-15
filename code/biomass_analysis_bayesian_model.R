@@ -106,7 +106,7 @@ pp_check(bio_mod2, nsamples = 50)
 save(bio_mod2, file = "output/bio_bayesian_model_soil.rda")
 # save(bio_mic_mod1, file = "output/bio_bayesian_model_microbes.rda")
 
-write_csv(tidy(summary(bio_mod2)$fixed), "output/bio_bayesian_model_soil.csv")
+write_csv(rownames_to_column(summary(bio_mod2)$fixed), "output/bio_bayesian_model_soil.csv")
 # write_csv(tidy(summary(bio_mic_mod1)$fixed), "output/bio_bayesian_model_microbes.csv")
 
 
@@ -173,7 +173,7 @@ col_pal <- viridis_pal(direction = -1)(4)
 tiff("output/Figure_4.tiff", width = 180, height = 90, units = "mm", res = 300, compression = "lzw")
 ggplot(bio_post, aes(soil, biomass, shape = nitrogen_added, color = infection_abb, fill = infection_abb, group = interaction(nitrogen_added, infection_abb))) +
   geom_point(data = dat3, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.6)) +
-  stat_pointinterval(.width = 0.95, position = position_dodge(0.6), alpha = 0.7, point_size = 2.5, interval_size = 0.75) +
+  stat_pointinterval(.width = 0.95, point_interval = mean_hdi, position = position_dodge(0.6), alpha = 0.7, point_size = 2.5, interval_size = 0.75) +
   scale_color_manual(values = col_pal[c(1,2,4)], name = "Virus infection") +
   scale_fill_manual(values = col_pal[c(1,2,4)], name = "Virus infection") +
   scale_shape(name = "Nitrogen supply") +

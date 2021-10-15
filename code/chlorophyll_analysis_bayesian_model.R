@@ -113,7 +113,7 @@ pp_check(chlor_mod2, nsamples = 50)
 save(chlor_mod2, file = "output/chlor_bayesian_model_soil.rda")
 # save(chlor_mic_mod1, file = "output/chlor_bayesian_model_microbes.rda")
 
-write_csv(tidy(summary(chlor_mod2)$fixed), "output/chlor_bayesian_model_soil.csv")
+write_csv(rownames_to_column(summary(chlor_mod2)$fixed), "output/chlor_bayesian_model_soil.csv")
 # write_csv(tidy(summary(chlor_mic_mod1)$fixed), "output/chlor_bayesian_model_microbes.csv")
 
 
@@ -180,7 +180,7 @@ col_pal <- viridis_pal(direction = -1)(4)
 tiff("output/Figure_5.tiff", width = 180, height = 90, units = "mm", res = 300, compression = "lzw")
 ggplot(chlor_post, aes(soil, chlorophyll, shape = nitrogen_added, color = infection_abb, fill = infection_abb, group = interaction(nitrogen_added, infection_abb))) +
   geom_point(data = dat3, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.6)) +
-  stat_pointinterval(.width = 0.95, position = position_dodge(0.6), alpha = 0.7, point_size = 2.5, interval_size = 0.75) +
+  stat_pointinterval(.width = 0.95, point_interval = mean_hdi, position = position_dodge(0.6), alpha = 0.7, point_size = 2.5, interval_size = 0.75) +
   scale_color_manual(values = col_pal[c(1,2,4)], name = "Virus infection") +
   scale_fill_manual(values = col_pal[c(1,2,4)], name = "Virus infection") +
   scale_shape(name = "Nitrogen supply") +
@@ -194,18 +194,18 @@ dev.off()
 
 # soil model
 chlor_post2 <- posterior_samples(chlor_mod2) %>%
-  rename(soilA_pav_int = "b_soilambientN:infectionPAVinfection",
+  rename(soilA_pav_int = "b_soilambientN:infection_abbPAV",
          soilA_N_int = "b_soilambientN:N_added",
-         N_pav_int = "b_N_added:infectionPAVinfection",
-         soilA_N_pav_int = "b_soilambientN:N_added:infectionPAVinfection") %>%
+         N_pav_int = "b_N_added:infection_abbPAV",
+         soilA_N_pav_int = "b_soilambientN:N_added:infection_abbPAV") %>%
   mutate(icp = exp(b_Intercept),
          high_N = exp(b_Intercept + b_N_added),
          N_effect = 100*(high_N - icp)/icp,
          soilA = exp(b_Intercept + b_soilambientN),
-         pav_soilA = exp(b_Intercept+ b_soilambientN + b_infectionPAVinfection + soilA_pav_int),
+         pav_soilA = exp(b_Intercept+ b_soilambientN + b_infection_abbPAV + soilA_pav_int),
          pav_soilA_effect = 100*(pav_soilA - soilA)/soilA,
          soilA_N = exp(b_Intercept+ b_soilambientN + b_N_added + soilA_N_int),
-         pav_soilA_N = exp(b_Intercept+ b_soilambientN + b_N_added + b_infectionPAVinfection + soilA_N_int + soilA_pav_int + N_pav_int + soilA_N_pav_int),
+         pav_soilA_N = exp(b_Intercept+ b_soilambientN + b_N_added + b_infection_abbPAV + soilA_N_int + soilA_pav_int + N_pav_int + soilA_N_pav_int),
          pav_soilA_N_effect = 100*(pav_soilA_N - soilA_N)/soilA_N)
 
 mean_hdi(chlor_post2$icp)
