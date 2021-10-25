@@ -170,14 +170,14 @@ theme_def <- theme_bw() +
 col_pal <- viridis_pal(direction = -1)(4)
 
 # figure
-tiff("output/Figure_4.tiff", width = 180, height = 90, units = "mm", res = 300, compression = "lzw")
+tiff("output/Figure_5.tiff", width = 180, height = 90, units = "mm", res = 300, compression = "lzw")
 ggplot(bio_post, aes(soil, biomass, shape = nitrogen_added, color = infection_abb, fill = infection_abb, group = interaction(nitrogen_added, infection_abb))) +
   geom_point(data = dat3, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.6)) +
   stat_pointinterval(.width = 0.95, point_interval = mean_hdi, position = position_dodge(0.6), alpha = 0.7, point_size = 2.5, interval_size = 0.75) +
   scale_color_manual(values = col_pal[c(1,2,4)], name = "Virus infection") +
   scale_fill_manual(values = col_pal[c(1,2,4)], name = "Virus infection") +
   scale_shape(name = "Nitrogen supply") +
-  labs(x = "Field soil treatment", y = "Biomass (g)") +
+  labs(x = "Long-term N enrichment treatment", y = "Biomass (g)") +
   theme_def
 dev.off()
 
