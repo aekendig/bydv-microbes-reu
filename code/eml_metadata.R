@@ -87,7 +87,7 @@ cnlist <- c("Biomass analysis",
 
 make_eml(path = "metadata",
          data.path = "edi",
-         dataset.title = "Soil microbes mediate the effects of nitrogen supply and co-inoculation on Barley Yellow Dwarf Virus in Avena sativa",
+         dataset.title = "Long-term nitrogen enrichment mediates the effects of nitrogen supply and co-inoculation on a viral pathogen",
          data.table = dlist,
          data.table.name = dnlist,
          data.table.description = ddlist,
@@ -101,12 +101,12 @@ make_eml(path = "metadata",
          maintenance.description = "completed", 
          user.id = "aekendig",
          user.domain = "EDI",
-         package.id = "edi.209.1")
+         package.id = "edi.209.2")
 
 
 #### check warnings ####
 
-eml <- EML::read_eml("metadata/edi.209.1.xml")
+eml <- EML::read_eml("metadata/edi.209.2.xml")
 EML::eml_validate(eml)
 
 # https://portal-s.edirepository.org/nis/mapbrowse?scope=edi&identifier=209&revision=1

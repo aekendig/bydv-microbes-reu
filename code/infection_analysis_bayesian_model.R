@@ -323,10 +323,12 @@ theme_def <- theme_bw() +
 col_pal <- viridis_pal(direction = -1)(4)
 
 # PAV infection prevalence
+# have to use hdci for this because high N PAV are not continuous with hdi
+# results are indistinguishable
 tiff("output/Figure_2.tiff", width = 160, height = 90, units = "mm", res = 300, compression = "lzw")
 ggplot(pav_post, aes(soil, pav, shape = nitrogen_added, color = inoculation, fill = inoculation, group = interaction(nitrogen_added, inoculation))) +
   geom_point(data = pav_dat, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.5)) +
-  stat_pointinterval(.width = 0.95, point_interval = mean_hdi, position = position_dodge(0.5), alpha = 0.7, point_size = 2.5, interval_size = 0.75) +
+  stat_pointinterval(.width = 0.95, point_interval = mean_hdci, position = position_dodge(0.5), alpha = 0.7, point_size = 2.5, interval_size = 0.75) +
   scale_color_manual(values = col_pal[2:3], name = "Virus inoculation",
                      labels = c("PAV", "co-inoculation")) +
   scale_fill_manual(values = col_pal[2:3], name = "Virus inoculation",
