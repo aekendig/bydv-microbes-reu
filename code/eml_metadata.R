@@ -101,12 +101,12 @@ make_eml(path = "metadata",
          maintenance.description = "completed", 
          user.id = "aekendig",
          user.domain = "EDI",
-         package.id = "edi.209.2")
+         package.id = "edi.1032.1")
 
 
 #### check warnings ####
 
-eml <- EML::read_eml("metadata/edi.209.2.xml")
+eml <- EML::read_eml("metadata/edi.1032.1.xml")
 EML::eml_validate(eml)
 
 # https://portal-s.edirepository.org/nis/mapbrowse?scope=edi&identifier=209&revision=1

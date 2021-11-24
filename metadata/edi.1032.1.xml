@@ -1,0 +1,654 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eml:eml xmlns:eml="https://eml.ecoinformatics.org/eml-2.2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:stmml="http://www.xml-cml.org/schema/stmml-1.2" packageId="edi.1032.1" xsi:schemaLocation="https://eml.ecoinformatics.org/eml-2.2.0/eml.xsd https://eml.ecoinformatics.org/eml-2.2.0/eml.xsd" system="edi">
+  <access authSystem="https://pasta.edirepository.org/authentication" order="allowFirst" scope="document">
+    <allow>
+      <principal>uid=aekendig,o=EDI,dc=edirepository,dc=org</principal>
+      <permission>all</permission>
+    </allow>
+    <allow>
+      <principal>public</principal>
+      <permission>read</permission>
+    </allow>
+  </access>
+  <dataset>
+    <title>Long-term nitrogen enrichment mediates the effects of nitrogen supply and co-inoculation on a viral pathogen</title>
+    <creator>
+      <individualName>
+        <givenName>Casey</givenName>
+        <givenName>A.</givenName>
+        <surName>Easterday</surName>
+      </individualName>
+      <organizationName>University of Minnesota</organizationName>
+      <electronicMailAddress>easte060@umn.edu</electronicMailAddress>
+      <userId directory="https://orcid.org">https://orcid.org/0000-0001-9965-9988</userId>
+    </creator>
+    <creator>
+      <individualName>
+        <givenName>Amy</givenName>
+        <givenName>E.</givenName>
+        <surName>Kendig</surName>
+      </individualName>
+      <organizationName>University of Minnesota</organizationName>
+      <electronicMailAddress>aekendig@gmail.com</electronicMailAddress>
+      <userId directory="https://orcid.org">https://orcid.org/0000-0002-2774-1795</userId>
+    </creator>
+    <creator>
+      <individualName>
+        <givenName>Christelle</givenName>
+        <surName>Lacroix</surName>
+      </individualName>
+      <organizationName>University of Minnesota</organizationName>
+      <electronicMailAddress>christelle.lacroix@inrae.fr</electronicMailAddress>
+      <userId directory="https://orcid.org">https://orcid.org/0000-0001-8808-4752</userId>
+    </creator>
+    <creator>
+      <individualName>
+        <givenName>Eric</givenName>
+        <givenName>W.</givenName>
+        <surName>Seabloom</surName>
+      </individualName>
+      <organizationName>University of Minnesota</organizationName>
+      <electronicMailAddress>seabloom@umn.edu</electronicMailAddress>
+      <userId directory="https://orcid.org">https://orcid.org/0000-0001-6780-9259</userId>
+    </creator>
+    <creator>
+      <individualName>
+        <givenName>Elizabeth</givenName>
+        <givenName>T.</givenName>
+        <surName>Borer</surName>
+      </individualName>
+      <organizationName>University of Minnesota</organizationName>
+      <electronicMailAddress>borer@umn.edu</electronicMailAddress>
+      <userId directory="https://orcid.org">https://orcid.org/0000-0003-2259-5853</userId>
+    </creator>
+    <pubDate>2021-11-19</pubDate>
+    <abstract>
+      <para>Host nutrient supply can mediate host–pathogen and pathogen–pathogen interactions. In terrestrial systems, plant nutrient supply is mediated by soil microbes, suggesting a potential role of soil microbes in plant diseases beyond soil-borne pathogens and induced plant defenses. Long-term nitrogen (N) enrichment can shift pathogenic and non-pathogenic soil microbial community composition and function, but it is unclear if these shifts affect plant–pathogen and pathogen–pathogen interactions. In a growth chamber experiment, we tested the effect of long-term N enrichment on infection by Barley Yellow Dwarf Virus (BYDV-PAV) and Cereal Yellow Dwarf Virus (CYDV-RPV), aphid-vectored RNA viruses, in a grass host. We inoculated sterilized growing medium with soil collected from a long-term N enrichment experiment (ambient, low, and high N soil treatments) to isolate effects mediated by the soil microbial community. We crossed soil treatments with a nitrogen supply treatment (low, high) and virus inoculation treatment (mock-, singly-, and co-inoculated) to evaluate the effects of long-term N enrichment on plant–pathogen and pathogen–pathogen interactions, as mediated by N availability. BYDV-PAV incidence (0.96) declined with low N soil (to 0.46), high N supply (to 0.61), and co-inoculation (to 0.32). Low N soil mediated the effect of N supply on BYDV-PAV: instead of N supply reducing BYDV-PAV incidence, the incidence increased. In addition, ambient and low N soil ameliorated the negative effect of co-inoculation on BYDV-PAV incidence. BYDV-PAV infection only reduced chlorophyll when plants were grown with low N supply and ambient N soil. Soil inoculant with different levels of long-term N enrichment had different effects on host–pathogen and pathogen–pathogen interactions, suggesting that shifts in the structure and function of soil microbial communities with long-term N enrichment may mediate disease dynamics.</para>
+    </abstract>
+    <keywordSet>
+      <keyword>nitrogen</keyword>
+      <keyword>microbes</keyword>
+      <keyword>plants</keyword>
+      <keyword>viruses</keyword>
+      <keyword>species interactions</keyword>
+      <keywordThesaurus>LTER</keywordThesaurus>
+    </keywordSet>
+    <additionalInfo>
+      <para>Recommended protocol to run analyses: 
+Using RStudio, create a new project for these analyses. In the project directory, create new directories named "data", "code", and "output". Place the data and code downloaded from this repository in their corresponding directories. You can now run the code for biomass analysis, chlorophyll analysis, and infection analysis in any order. Each of these will source the data processing code at the beginning. Figures, models, and tables will be saved to the output directory.</para>
+    </additionalInfo>
+    <intellectualRights>
+      <para>This information is released under the Creative Commons license - Attribution - CC BY (https://creativecommons.org/licenses/by/4.0/). The consumer of these data (\"Data User\" herein) is required to cite it appropriately in any publication that results from its use. The Data User should realize that these data may be actively used by others for ongoing research and that coordination may be necessary to prevent duplicate publication. The Data User is urged to contact the authors of these data if any questions about methodology or results occur. Where appropriate, the Data User is encouraged to consider collaboration or co-authorship with the authors. The Data User should realize that misinterpretation of data may occur if used out of context of the original study. While substantial efforts are made to ensure the accuracy of data and associated documentation, complete accuracy of data sets cannot be guaranteed. All data are made available \"as is.\" The Data User should be aware, however, that data are updated periodically and it is the responsibility of the Data User to check for new versions of the data. The data authors and the repository where these data were obtained shall not be liable for damages resulting from any use or misinterpretation of the data. Thank you.
+</para>
+    </intellectualRights>
+    <coverage>
+      <geographicCoverage>
+        <geographicDescription>St. Paul, MN, USA</geographicDescription>
+        <boundingCoordinates>
+          <westBoundingCoordinate>-93.18</westBoundingCoordinate>
+          <eastBoundingCoordinate>-93.18</eastBoundingCoordinate>
+          <northBoundingCoordinate>44.98</northBoundingCoordinate>
+          <southBoundingCoordinate>44.98</southBoundingCoordinate>
+        </boundingCoordinates>
+      </geographicCoverage>
+      <temporalCoverage>
+        <rangeOfDates>
+          <beginDate>
+            <calendarDate>2014-06-01</calendarDate>
+          </beginDate>
+          <endDate>
+            <calendarDate>2016-06-26</calendarDate>
+          </endDate>
+        </rangeOfDates>
+      </temporalCoverage>
+    </coverage>
+    <maintenance>
+      <description>completed</description>
+    </maintenance>
+    <contact>
+      <individualName>
+        <givenName>Amy</givenName>
+        <givenName>E.</givenName>
+        <surName>Kendig</surName>
+      </individualName>
+      <organizationName>University of Minnesota</organizationName>
+      <electronicMailAddress>aekendig@gmail.com</electronicMailAddress>
+      <userId directory="https://orcid.org">https://orcid.org/0000-0002-2774-1795</userId>
+    </contact>
+    <methods>
+      <methodStep>
+        <description>
+          <para>Study system:  &#13;
+- viruses: Barley yellow dwarf virus PAV (BYDV-PAV) and cereal yellow dwarf virus RPV (CYDV-RPV)  
+- aphid vector: Rhopalosiphum padi  
+- host plant: Avena sativa L. cv. Coast Black Oat  
+- soil inoculum: collected from Cedar Creek Ecosystem Science Reserve and Long Term Ecological Research (LTER) site (CDR)  </para>
+          <para>Soil microbes:  &#13;
+In June 2014, we collected soil cores from a long-term experiment in a successional grassland at CDR (experiment “E001”, www.cedarcreek.umn.edu; Bethel, MN, USA). We collected soils from field A, which was abandoned from agriculture in 1968 and burned annually beginning in 2005. These plots had received annual additions of P, K, Ca, Mg, S, and citrate-chelated trace metals since 1982 and three levels of N fertilizer: 0, 34, or 270 kg N ha-1 yr-1 (see Tilman, 1987 for details). We randomly sampled three plots for each N fertilization rate (54H, 52H, 45A, 40H, 38D, 23D, 22A, 17H, and 8D) and six locations within each 4 x 4 m plot to extract a soil core (1.9 cm diameter and 10 cm deep). In the lab, soil cores were passed through a 4 mm sieve, then twice through a 2 mm sieve to remove coarse debris and roots, and then combined based on their N fertilization rate. Next, we prepared soil microcosms by filling four large, surface sterilized bins with 17 L of potting soil composed of 70% Sunshine medium vermiculite (vermiculite and less than 1% crystalline silica; Sun Gro Horticulture, Agawam, MA, USA) and 30% Turface MVP (calcined clay containing up to 30% crystalline silica; Turface Athletics, Buffalo Grove, IL, USA), saturated with tap water (approximately 5 L for every 20 L of dry soil) and autoclaved at 121oC and 15 psi for 60 minutes to kill the naturally existing microbial consortium. We then mixed 350 mL of field soil from each N fertilization level separately into the bins. Field soil comprised approximately 2% of the bin soil volume. We did not mix field soil into the fourth bin. Lastly, we covered the bins with non-airtight lids and incubated the soil at 25°C for 11 days. </para>
+          <para>Experimental setup and implementation:  &#13;
+For each of the four soil microcosms, we filled 80 conical plastic pots (3.8 cm diameter x 21 cm depth, 164 ml) with soil mixture and planted one A. sativa seed per pot 4.5 cm from the surface of the soil. Seeds were obtained from the USDA (National plant germplasm system, USDA; USA) in June 2013 and were surface sterilized with 12.5% bleach solution. Then, we haphazardly assigned plants to later receive one of two N supply rates (7.5 μM NH4NO3 was “low N” and 375 μM NH4NO3 was “high N”) and one of four virus inoculations (BYDV-PAV, CYDV-RPV, co-inoculation, or mock inoculation), leading to ten replicates per treatment. Plants grew in a growth chamber containing only healthy plants with a 16:8 h light:dark cycle at 19-20oC under Lumilux high pressure sodium ET18 bulbs for 11 days. Two days after planting, we watered the pots with 30 ml of the modified Hoagland solution corresponding to the plant’s assigned N supply rate. We watered plants with these solutions twice per week until harvest.&#13;</para>
+          <para>When the plants had been growing for 22 days, we used R. padi aphids to inoculate them with BYDV-PAV, CYDV-RPV, both viruses, or to perform a mock inoculation. Rhopalosiphum padi were obtained from Dr. G. Heimpel at the University of Minnesota (St. Paul, MN, USA) and reared on A. sativa in growth chamber conditions described above (except with 28W Ultramax EcoXL lights). BYDV-PAV and CYDV-RPV isolates were obtained from Dr. S. Gray at Cornell University (Ithaca, NY, USA) in January 2013. They were also maintained in A. sativa plants in similar growth chamber conditions (except with 40W cool white light bulbs). We inoculated plants by allowing aphids to feed on either BYDV-PAV- or CYDV-RPV-infected A. sativa tissue in 25 mL glass tubes sealed with corks for approximately 48 hours. Then, we transferred the aphids to 2.5 x 8.5 cm, 118 μm polyester mesh cages secured to one leaf on each experimental plant with Parafilm and bobby pins. Ten aphids were used to inoculate each plant, with 5 carrying each virus for the co-inoculation treatment, five viruliferous (carrying virus) and five non-viruliferous aphids for each single virus treatment, and ten non-viruliferous aphids for the mock inoculation treatment. We allowed aphids to feed on the experimental plants for approximately 96 hours, after which we manually killed all aphids and removed the cages. Plants grew for 19 more days before we took measurements. To estimate N stress through leaf chlorophyll content, we took three measurements per plant with a SPAD-502 Meter (Soil Plant Analysis Development; Konica Minolta, Tokyo, Japan). Then, we harvested and weighed the aboveground biomass, which we stored at -20°C until it was analyzed for virus infection.</para>
+          <para>Detection of B/CYDV infection:  &#13;
+To extract total RNA, we ground approximately 50 mg of leaf tissue in a bead-beater with a copper BB and 1 ml of TRIzolTM Reagent (InvitrogenTM, Thermo Fisher Scientific, Waltham, MA, USA) per the manufacturer’s instructions. We then purified RNA from the cellular components following the extraction protocol published by Lacroix et. al. (2014). We re-suspended the purified RNA in nuclease-free water and stored the samples at -20°C until performing the reverse transcription polymerase chain reaction (RT-PCR). We used a nanodrop spectrophotometer (Thermo Fisher Scientific) to quantify the concentration of RNA within each sample and then performed a multiplex RT-PCR assay to isolate and amplify BYDV-PAV and CYDV-RPV nucleic acids as published previously (Deb &amp; Anderson, 2008; Lacroix et al., 2014). We combined 5 μl of each PCR product with 2 μl of 6X loading dye (Genesee Scientific, El Cajon, CA, USA) and loaded the samples and 100 bp DNA ladder (Apex Bioresearch Products, North Liberty, IA, USA) into an Agarose-1000 gel (Invitrogen, Thermo Fisher Scientific) stained with 2% SybrSafe (Invitrogen, Thermo Fisher Scientific). After 25 minutes at 120 V, we observed the gel with a UV-light EZ doc system (Bio-Rad Laboratories, Hercules, CA, USA) to detect bands at 298 bp and 447 bp, indicating the presence of BYDV-PAV and CYDV-RPV, respectively.</para>
+          <para>Statistical analyses:  &#13;
+We assessed the effects of the experimental treatments on the infection incidence of BYDV-PAV and CYDV-RPV (i.e., the proportion of plants infected out of those inoculated) using binomial (logit-link) generalized linear regressions with virus infection as a binary response variable and long-term N-enriched soil treatment (non-inoculated, ambient N, low N, or high N), N supply (binary variable), whether the plants were co-inoculated (binary variable), and their interactions as independent variables. The intercepts represented singly inoculated plants grown in non-inoculated growing medium with low N supply. We tested the effects of N supply and soil treatment on co-infection incidence using an analogous procedure. Samples with an infection inconsistent with the inoculation treatment were removed from analyses. Inconsistent infections likely arose from small aphids escaping cages during the inoculation period and occurred in 31 of 229 plants (Table A2). Treatment sample sizes in the final dataset ranged from seven to ten.
+&#13;
+To assess the effects of the experimental treatments on the A. sativa plants, we used linear regressions with log-transformed biomass and log-transformed chlorophyll content as response variables and long-term N-enriched soil treatment, N supply, successful inoculation treatment (mock, BYDV-PAV only, and CYDV-RPV only), and their interactions as the independent variables. Therefore, we omitted plants from analyses that were unsuccessfully inoculated, either because the intended infection was not detected or because an unintended infection was detected (Table A2). Co-infected plants were omitted from analyses due to limited sample sizes. The chlorophyll values used in the model were the averages of three measurements per plant. The intercepts represented mock-inoculated plants grown in non-inoculated growing medium with low N supply. Treatment sample sizes in the final dataset ranged from three to nine.
+&#13;
+All regressions described above were fit using Bayesian models with the brms package in R version 4.0.2 (Bürkner, 2017; R Core Team, 2020). Models had three chains of 6000 iterations each with a 1000 iteration discarded burn-in period. Gaussian distributions with a mean of zero and a standard deviation of ten were used as prior distributions for intercepts and coefficients (very weakly informative). We used a half Student’s t-distributions with three degrees of freedom, a location of zero, and a scale of ten as the prior distribution for the residual standard deviations (Bürkner, 2017). We assessed model fit by ensuring that r-hat values were equal to one, that the three chains were well mixed, and that simulated data from the posterior predictive distributions were consistent with observed data. In the results, we present point estimates with 95% highest posterior density intervals based on posterior samples of model coefficients in brackets. 
+&#13;
+To evaluate the effect of sample size on the probability of detecting an effect with quantile-based 95% credible intervals that omit zero, we simulated 1000 datasets of the same sample sizes and with the mean effect size measured in the experiment. We drew simulated values from a normal distribution with its mean equal to the model estimate for the treatment and its standard deviation equal to the overall model-estimated standard deviation. We fit regressions to the simulated datasets and calculated the number of times the 95% credible intervals of the variable of interest omitted zero (Kurz, 2019). We repeated the analysis with multiple sample sizes. We performed this analysis for the effects of CYDV-RPV infection on log-transformed plant biomass, where the mean difference was -0.23, the sample sizes were 8 (mock-inoculated, low N supply, non-inoculated growing medium ) and 6 (CYDV-RPV infected, low N supply, non-inoculated growing medium), and the regression was a normal linear regression with infection status as the independent variable. &#13;</para>
+          <para>
+References:  
+Bürkner P-C. 2017. brms: An R package for Bayesian multilevel models using Stan. Journal of Statistical Software 80: 1–28.  
+Deb M, Anderson JM. 2008. Development of a multiplexed PCR detection method for Barley and Cereal yellow dwarf viruses, Wheat spindle streak virus, Wheat streak mosaic virus and Soil-borne wheat mosaic virus. Journal of Virological Methods 148: 17–24.  
+Kurz AS. 2019. Bayesian power analysis: Part I. Prepare to reject H0 with simulation.[WWW document] URL https://solomonkurz.netlify.app/post/bayesian-power-analysis-part-i/. [accessed 19 April 2021].  
+Lacroix C, Seabloom EW, Borer ET. 2014. Environmental nutrient supply alters prevalence and weakens competitive interactions among coinfecting viruses. The New Phytologist 204: 424–433.  
+R Core Team. 2020. R: A language and environment for statistical computing. Vienna, Austria: R Foundation for Statistical Computing.  
+Tilman D. 1987. Secondary succession and the pattern of plant dominance along experimental nitrogen gradients. Ecological Monographs 57: 189–214.</para>
+        </description>
+      </methodStep>
+    </methods>
+    <project>
+      <title>No project title to report</title>
+      <personnel>
+        <individualName>
+          <givenName>Eric</givenName>
+          <givenName>W.</givenName>
+          <surName>Seabloom</surName>
+        </individualName>
+        <organizationName>University of Minnesota</organizationName>
+        <electronicMailAddress>seabloom@umn.edu</electronicMailAddress>
+        <userId directory="https://orcid.org">https://orcid.org/0000-0001-6780-9259</userId>
+        <role>Principal Investigator</role>
+      </personnel>
+      <funding>NSF DEB-1015805</funding>
+      <relatedProject>
+        <title>No project title to report</title>
+        <personnel>
+          <individualName>
+            <givenName>Elizabeth</givenName>
+            <givenName>T.</givenName>
+            <surName>Borer</surName>
+          </individualName>
+          <organizationName>University of Minnesota</organizationName>
+          <electronicMailAddress>borer@umn.edu</electronicMailAddress>
+          <userId directory="https://orcid.org">https://orcid.org/0000-0003-2259-5853</userId>
+          <role>Principal Investigator</role>
+        </personnel>
+        <funding>NSF DEB-1015805</funding>
+      </relatedProject>
+    </project>
+    <dataTable>
+      <entityName>experiment data</entityName>
+      <entityDescription>infection, biomass, and chlorophyll data</entityDescription>
+      <physical>
+        <objectName>Easterday_etal_data_20160924.csv</objectName>
+        <size unit="bytes">29970</size>
+        <authentication method="MD5">af94f2333abb92100abc5ac96304a5f3</authentication>
+        <dataFormat>
+          <textFormat>
+            <numHeaderLines>1</numHeaderLines>
+            <recordDelimiter>\r\n</recordDelimiter>
+            <attributeOrientation>column</attributeOrientation>
+            <simpleDelimited>
+              <fieldDelimiter>,</fieldDelimiter>
+              <quoteCharacter>"</quoteCharacter>
+            </simpleDelimited>
+          </textFormat>
+        </dataFormat>
+      </physical>
+      <attributeList>
+        <attribute>
+          <attributeName>nutrient</attributeName>
+          <attributeDefinition>nitrogen supply treatment in which the plant grew</attributeDefinition>
+          <storageType>string</storageType>
+          <measurementScale>
+            <nominal>
+              <nonNumericDomain>
+                <enumeratedDomain>
+                  <codeDefinition>
+                    <code>Ctrl</code>
+                    <definition>low nitrogen supply (control), 7.5 _M of ammonium nitrate in the modified Hoagland solution</definition>
+                  </codeDefinition>
+                  <codeDefinition>
+                    <code>N</code>
+                    <definition>high nitrogen supply (control), 7.5 _M of ammonium nitrate in the modified Hoagland solution</definition>
+                  </codeDefinition>
+                </enumeratedDomain>
+              </nonNumericDomain>
+            </nominal>
+          </measurementScale>
+        </attribute>
+        <attribute>
+          <attributeName>soil</attributeName>
+          <attributeDefinition>soil microbial treatment in which the plant grew</attributeDefinition>
+          <storageType>string</storageType>
+          <measurementScale>
+            <nominal>
+              <nonNumericDomain>
+                <enumeratedDomain>
+                  <codeDefinition>
+                    <code>A</code>
+                    <definition>sterilized soil with field soil added; 0 kg N per ha per yr added to the field plots where soil was collected</definition>
+                  </codeDefinition>
+                  <codeDefinition>
+                    <code>D</code>
+                    <definition>sterilized soil with field soil added; 34 kg N per ha per yr added to the field plots where soil was collected</definition>
+                  </codeDefinition>
+                  <codeDefinition>
+                    <code>H</code>
+                    <definition>sterilized soil with field soil added; 270 kg N per ha per yr added to the field plots where soil was collected</definition>
+                  </codeDefinition>
+                  <codeDefinition>
+                    <code>Sterile</code>
+                    <definition>sterilized soil without field soil added</definition>
+                  </codeDefinition>
+                </enumeratedDomain>
+              </nonNumericDomain>
+            </nominal>
+          </measurementScale>
+        </attribute>
+        <attribute>
+          <attributeName>disease</attributeName>
+          <attributeDefinition>virus inoculation treatment</attributeDefinition>
+          <storageType>string</storageType>
+          <measurementScale>
+            <nominal>
+              <nonNumericDomain>
+                <enumeratedDomain>
+                  <codeDefinition>
+                    <code>Co</code>
+                    <definition>co-inoculation</definition>
+                  </codeDefinition>
+                  <codeDefinition>
+                    <code>Healthy</code>
+                    <definition>mock inoculation</definition>
+                  </codeDefinition>
+                  <codeDefinition>
+                    <code>PAV</code>
+                    <definition>PAV only inoculation</definition>
+                  </codeDefinition>
+                  <codeDefinition>
+                    <code>RPV</code>
+                    <definition>RPV only inoculation</definition>
+                  </codeDefinition>
+                </enumeratedDomain>
+              </nonNumericDomain>
+            </nominal>
+          </measurementScale>
+        </attribute>
+        <attribute>
+          <attributeName>replicate</attributeName>
+          <attributeDefinition>experimental replicate</attributeDefinition>
+          <storageType>float</storageType>
+          <measurementScale>
+            <ratio>
+              <unit>
+                <standardUnit>dimensionless</standardUnit>
+              </unit>
+              <numericDomain>
+                <numberType>natural</numberType>
+                <bounds>
+                  <minimum exclusive="false">1</minimum>
+                  <maximum exclusive="false">10</maximum>
+                </bounds>
+              </numericDomain>
+            </ratio>
+          </measurementScale>
+        </attribute>
+        <attribute>
+          <attributeName>pav</attributeName>
+          <attributeDefinition>indicator variable for detection of PAV infection</attributeDefinition>
+          <storageType>string</storageType>
+          <measurementScale>
+            <nominal>
+              <nonNumericDomain>
+                <enumeratedDomain>
+                  <codeDefinition>
+                    <code>0</code>
+                    <definition>PAV was not detected in plant</definition>
+                  </codeDefinition>
+                  <codeDefinition>
+                    <code>0.5</code>
+                    <definition>PAV was detected in plant, but the gel electrophoresis band was weak</definition>
+                  </codeDefinition>
+                  <codeDefinition>
+                    <code>1</code>
+                    <definition>PAV was detected in plant and the gel electrophoresis band was strong</definition>
+                  </codeDefinition>
+                </enumeratedDomain>
+              </nonNumericDomain>
+            </nominal>
+          </measurementScale>
+          <missingValueCode>
+            <code>NA</code>
+            <codeExplanation>not available (sample not analyzed)</codeExplanation>
+          </missingValueCode>
+        </attribute>
+        <attribute>
+          <attributeName>rpv</attributeName>
+          <attributeDefinition>indicator variable for detection of RPV infection</attributeDefinition>
+          <storageType>string</storageType>
+          <measurementScale>
+            <nominal>
+              <nonNumericDomain>
+                <enumeratedDomain>
+                  <codeDefinition>
+                    <code>0</code>
+                    <definition>RPV was not detected in plant</definition>
+                  </codeDefinition>
+                  <codeDefinition>
+                    <code>0.5</code>
+                    <definition>RPV was detected in plant, but the gel electrophoresis band was weak</definition>
+                  </codeDefinition>
+                  <codeDefinition>
+                    <code>1</code>
+                    <definition>RPV was detected in plant and the gel electrophoresis band was strong</definition>
+                  </codeDefinition>
+                </enumeratedDomain>
+              </nonNumericDomain>
+            </nominal>
+          </measurementScale>
+          <missingValueCode>
+            <code>NA</code>
+            <codeExplanation>not available (sample not analyzed)</codeExplanation>
+          </missingValueCode>
+        </attribute>
+        <attribute>
+          <attributeName>extraction_set</attributeName>
+          <attributeDefinition>order in which RNA extraction was performed on tissue samples</attributeDefinition>
+          <storageType>float</storageType>
+          <measurementScale>
+            <ratio>
+              <unit>
+                <standardUnit>dimensionless</standardUnit>
+              </unit>
+              <numericDomain>
+                <numberType>natural</numberType>
+                <bounds>
+                  <minimum exclusive="false">1</minimum>
+                  <maximum exclusive="false">11</maximum>
+                </bounds>
+              </numericDomain>
+            </ratio>
+          </measurementScale>
+          <missingValueCode>
+            <code>NA</code>
+            <codeExplanation>not available (sample not analyzed)</codeExplanation>
+          </missingValueCode>
+        </attribute>
+        <attribute>
+          <attributeName>mass_tissue_used</attributeName>
+          <attributeDefinition>amount of tissue used for RNA extraction</attributeDefinition>
+          <storageType>float</storageType>
+          <measurementScale>
+            <ratio>
+              <unit>
+                <standardUnit>milligram</standardUnit>
+              </unit>
+              <numericDomain>
+                <numberType>real</numberType>
+                <bounds>
+                  <minimum exclusive="false">0.092</minimum>
+                  <maximum exclusive="false">57.9</maximum>
+                </bounds>
+              </numericDomain>
+            </ratio>
+          </measurementScale>
+          <missingValueCode>
+            <code>NA</code>
+            <codeExplanation>not available (sample not analyzed)</codeExplanation>
+          </missingValueCode>
+        </attribute>
+        <attribute>
+          <attributeName>date_extracted</attributeName>
+          <attributeDefinition>date of RNA extraction</attributeDefinition>
+          <storageType>date</storageType>
+          <measurementScale>
+            <dateTime>
+              <formatString>YYYY-MM-DD</formatString>
+              <dateTimeDomain/>
+            </dateTime>
+          </measurementScale>
+          <missingValueCode>
+            <code>NA</code>
+            <codeExplanation>not available (sample not analyzed)</codeExplanation>
+          </missingValueCode>
+        </attribute>
+        <attribute>
+          <attributeName>tissue_left</attributeName>
+          <attributeDefinition>indicator variable for whether plant tissue remained following RNA extraction</attributeDefinition>
+          <storageType>string</storageType>
+          <measurementScale>
+            <nominal>
+              <nonNumericDomain>
+                <enumeratedDomain>
+                  <codeDefinition>
+                    <code>yes</code>
+                    <definition>plant tissue remained following RNA extraction</definition>
+                  </codeDefinition>
+                  <codeDefinition>
+                    <code>no</code>
+                    <definition>no plant tissue remained following RNA extraction</definition>
+                  </codeDefinition>
+                </enumeratedDomain>
+              </nonNumericDomain>
+            </nominal>
+          </measurementScale>
+          <missingValueCode>
+            <code>NA</code>
+            <codeExplanation>not available (sample not analyzed)</codeExplanation>
+          </missingValueCode>
+        </attribute>
+        <attribute>
+          <attributeName>biomass</attributeName>
+          <attributeDefinition>weight of plant</attributeDefinition>
+          <storageType>float</storageType>
+          <measurementScale>
+            <ratio>
+              <unit>
+                <standardUnit>gram</standardUnit>
+              </unit>
+              <numericDomain>
+                <numberType>real</numberType>
+                <bounds>
+                  <minimum exclusive="false">0.027</minimum>
+                  <maximum exclusive="false">0.7701</maximum>
+                </bounds>
+              </numericDomain>
+            </ratio>
+          </measurementScale>
+          <missingValueCode>
+            <code>NA</code>
+            <codeExplanation>not available (plant not measured)</codeExplanation>
+          </missingValueCode>
+        </attribute>
+        <attribute>
+          <attributeName>date_rt</attributeName>
+          <attributeDefinition>date of reverse transcription</attributeDefinition>
+          <storageType>date</storageType>
+          <measurementScale>
+            <dateTime>
+              <formatString>YYYY-MM-DD</formatString>
+              <dateTimeDomain/>
+            </dateTime>
+          </measurementScale>
+          <missingValueCode>
+            <code>NA</code>
+            <codeExplanation>not available (sample not analyzed)</codeExplanation>
+          </missingValueCode>
+        </attribute>
+        <attribute>
+          <attributeName>date_pcr</attributeName>
+          <attributeDefinition>date of PCR</attributeDefinition>
+          <storageType>date</storageType>
+          <measurementScale>
+            <dateTime>
+              <formatString>YYYY-MM-DD</formatString>
+              <dateTimeDomain/>
+            </dateTime>
+          </measurementScale>
+          <missingValueCode>
+            <code>NA</code>
+            <codeExplanation>not available (sample not analyzed)</codeExplanation>
+          </missingValueCode>
+        </attribute>
+        <attribute>
+          <attributeName>date_gel</attributeName>
+          <attributeDefinition>date of gel electrophoresis</attributeDefinition>
+          <storageType>date</storageType>
+          <measurementScale>
+            <dateTime>
+              <formatString>YYYY-MM-DD</formatString>
+              <dateTimeDomain/>
+            </dateTime>
+          </measurementScale>
+          <missingValueCode>
+            <code>NA</code>
+            <codeExplanation>not available (sample not analyzed)</codeExplanation>
+          </missingValueCode>
+        </attribute>
+        <attribute>
+          <attributeName>chlorophyll_1</attributeName>
+          <attributeDefinition>first chlorophyll measurement</attributeDefinition>
+          <storageType>float</storageType>
+          <measurementScale>
+            <ratio>
+              <unit>
+                <customUnit>SPAD</customUnit>
+              </unit>
+              <numericDomain>
+                <numberType>real</numberType>
+                <bounds>
+                  <minimum exclusive="false">1.1</minimum>
+                  <maximum exclusive="false">39.1</maximum>
+                </bounds>
+              </numericDomain>
+            </ratio>
+          </measurementScale>
+          <missingValueCode>
+            <code>NA</code>
+            <codeExplanation>not available (plant not measured)</codeExplanation>
+          </missingValueCode>
+        </attribute>
+        <attribute>
+          <attributeName>chlorophyll_2</attributeName>
+          <attributeDefinition>second chlorophyll measurement</attributeDefinition>
+          <storageType>float</storageType>
+          <measurementScale>
+            <ratio>
+              <unit>
+                <customUnit>SPAD</customUnit>
+              </unit>
+              <numericDomain>
+                <numberType>real</numberType>
+                <bounds>
+                  <minimum exclusive="false">9</minimum>
+                  <maximum exclusive="false">36.9</maximum>
+                </bounds>
+              </numericDomain>
+            </ratio>
+          </measurementScale>
+          <missingValueCode>
+            <code>NA</code>
+            <codeExplanation>not available (plant not measured)</codeExplanation>
+          </missingValueCode>
+        </attribute>
+        <attribute>
+          <attributeName>chlorophyll_3</attributeName>
+          <attributeDefinition>third chlorophyll measurement</attributeDefinition>
+          <storageType>float</storageType>
+          <measurementScale>
+            <ratio>
+              <unit>
+                <customUnit>SPAD</customUnit>
+              </unit>
+              <numericDomain>
+                <numberType>real</numberType>
+                <bounds>
+                  <minimum exclusive="false">7.4</minimum>
+                  <maximum exclusive="false">35.3</maximum>
+                </bounds>
+              </numericDomain>
+            </ratio>
+          </measurementScale>
+          <missingValueCode>
+            <code>NA</code>
+            <codeExplanation>not available (plant not measured)</codeExplanation>
+          </missingValueCode>
+        </attribute>
+      </attributeList>
+      <numberOfRecords>314</numberOfRecords>
+    </dataTable>
+    <otherEntity>
+      <entityName>Biomass analysis</entityName>
+      <entityDescription>code to analyze biomass data and create figure</entityDescription>
+      <physical>
+        <objectName>biomass_analysis.R</objectName>
+        <size unit="bytes">11973</size>
+        <authentication method="MD5">7d7587b266c5558c145975bfde0ebeb6</authentication>
+        <dataFormat>
+          <externallyDefinedFormat>
+            <formatName>text/plain</formatName>
+          </externallyDefinedFormat>
+        </dataFormat>
+      </physical>
+      <entityType>unknown</entityType>
+    </otherEntity>
+    <otherEntity>
+      <entityName>Chlorophyll analysis</entityName>
+      <entityDescription>code to analyze chlorophyll data and create figure</entityDescription>
+      <physical>
+        <objectName>chlorophyll_analysis.R</objectName>
+        <size unit="bytes">8864</size>
+        <authentication method="MD5">e7c2074363e83f87a14b5880605a0a18</authentication>
+        <dataFormat>
+          <externallyDefinedFormat>
+            <formatName>text/plain</formatName>
+          </externallyDefinedFormat>
+        </dataFormat>
+      </physical>
+      <entityType>unknown</entityType>
+    </otherEntity>
+    <otherEntity>
+      <entityName>Data processing</entityName>
+      <entityDescription>initial data processing</entityDescription>
+      <physical>
+        <objectName>data_processing.R</objectName>
+        <size unit="bytes">1736</size>
+        <authentication method="MD5">568bb4cfedd376624af6d5e762960c8a</authentication>
+        <dataFormat>
+          <externallyDefinedFormat>
+            <formatName>text/plain</formatName>
+          </externallyDefinedFormat>
+        </dataFormat>
+      </physical>
+      <entityType>unknown</entityType>
+    </otherEntity>
+    <otherEntity>
+      <entityName>Infection analysis</entityName>
+      <entityDescription>code to analyze infection data and create figures</entityDescription>
+      <physical>
+        <objectName>infection_analysis.R</objectName>
+        <size unit="bytes">14321</size>
+        <authentication method="MD5">89e140ce1499192c29cb676c87378a7e</authentication>
+        <dataFormat>
+          <externallyDefinedFormat>
+            <formatName>text/plain</formatName>
+          </externallyDefinedFormat>
+        </dataFormat>
+      </physical>
+      <entityType>unknown</entityType>
+    </otherEntity>
+  </dataset>
+  <additionalMetadata>
+    <metadata>
+      <unitList>
+        <unit id="SPAD" multiplierToSI="1" name="SPAD" parentSI="" unitType="dimensionless">
+          <description>SPAD corresponds to the amount of chlorophyll in a plant leaf and its greenness. SPAD is calculated using the ratio of red (~650 nm) and infrared (~940 nm) light intensities emitted by LEDs, transmitted by the leaf, and converted to electrical signals. For more information, see user manual for SPAD 502 chlorophyll meters (Konica Minolta).</description>
+        </unit>
+      </unitList>
+    </metadata>
+  </additionalMetadata>
+</eml:eml>
