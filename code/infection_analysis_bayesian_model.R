@@ -24,6 +24,7 @@ logit2prob <- function(x){
 # reorganize factor levels
 dat2 <- dat %>%
   mutate(soil = fct_relevel(soil, "non-inoculated", "ambient N", "low N"),
+         soil2 = fct_recode(soil, "noninoculated" = "non-inoculated"), # editor removed hyphen
          inoculation = case_when(disease %in% c("PAV", "RPV") ~ "single",
                                  disease == "Co" ~ "co-inoculation",
                                  disease == "Healthy" ~ "mock") %>%
@@ -257,13 +258,12 @@ post_fun <- function(mod){
                  names_to = "treatment",
                  values_to = "values") %>%
     rowwise() %>%
-    mutate(soil = str_split(treatment, "_")[[1]][1],
+    mutate(soil2 = str_split(treatment, "_")[[1]][1],
            N_added = str_split(treatment, "_")[[1]][2] %>% as.double(),
            inoc = str_split(treatment, "_")[[1]][3] %>% as.double()) %>%
     ungroup() %>%
-    mutate(soil = str_replace(soil, "N", " N"),
-           soil = fct_relevel(soil, "noninoculated", "ambient N", "low N") %>%
-             fct_recode("non-inoculated" = "noninoculated"),
+    mutate(soil2 = str_replace(soil2, "N", " N"),
+           soil2 = fct_relevel(soil2, "noninoculated", "ambient N", "low N"),
            nitrogen_added = if_else(N_added == 1, "high", "low"),
            nitrogen_added = fct_relevel(nitrogen_added, "low"),
            inoculation = if_else(inoc == 1, "co-inoculation", "single"),
@@ -293,12 +293,11 @@ co_post <- as_draws_df(co_mod2) %>%
                names_to = "treatment",
                values_to = "coinfection") %>%
   rowwise() %>%
-  mutate(soil = str_split(treatment, "_")[[1]][1],
+  mutate(soil2 = str_split(treatment, "_")[[1]][1],
          N_added = str_split(treatment, "_")[[1]][2] %>% as.double()) %>%
   ungroup() %>%
-  mutate(soil = str_replace(soil, "N", " N"),
-         soil = fct_relevel(soil, "noninoculated", "ambient N", "low N") %>%
-           fct_recode("non-inoculated" = "noninoculated"),
+  mutate(soil2 = str_replace(soil2, "N", " N"),
+         soil2 = fct_relevel(soil2, "noninoculated", "ambient N", "low N"),
          nitrogen_added = if_else(N_added == 1, "high", "low"),
          nitrogen_added = fct_relevel(nitrogen_added, "low"))
 
@@ -326,40 +325,42 @@ col_pal <- viridis_pal(direction = -1)(4)
 # have to use hdci for this because high N PAV are not continuous with hdi
 # results are indistinguishable
 tiff("output/Figure_2.tiff", width = 160, height = 90, units = "mm", res = 300, compression = "lzw")
-ggplot(pav_post, aes(soil, pav, shape = nitrogen_added, color = inoculation, fill = inoculation, group = interaction(nitrogen_added, inoculation))) +
+ggplot(pav_post, aes(soil2, pav, shape = nitrogen_added, color = inoculation, fill = inoculation, group = interaction(nitrogen_added, inoculation))) +
   geom_point(data = pav_dat, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.5)) +
   stat_pointinterval(.width = 0.95, point_interval = mean_hdci, position = position_dodge(0.5), alpha = 0.7, point_size = 2.5, interval_size = 0.75) +
   scale_color_manual(values = col_pal[2:3], name = "Virus inoculation",
-                     labels = c("PAV", "co-inoculation")) +
+                     labels = c("BYDV-PAV", "co-inoculation")) +
   scale_fill_manual(values = col_pal[2:3], name = "Virus inoculation",
-                    labels = c("PAV", "co-inoculation")) +
-  scale_shape(name = "Nitrogen supply") +
+                    labels = c("BYDV-PAV", "co-inoculation")) +
+  scale_shape_manual(values = c(21, 24), name = "Nitrogen supply") +
   labs(x = "Long-term N enrichment treatment", y = "BYDV-PAV incidence") +
-  theme_def
+  theme_def +
+  guides(shape = guide_legend(order = 2, override.aes = list(fill = "black")), col = guide_legend(order = 1), 
+         fill = guide_legend(order = 1))
 dev.off()
 
 # RPV infection prevalence
 tiff("output/Figure_3.tiff", width = 160, height = 90, units = "mm", res = 300, compression = "lzw")
-ggplot(rpv_post, aes(soil, rpv, shape = nitrogen_added, color = inoculation, fill = inoculation, group = interaction(nitrogen_added, inoculation))) +
+ggplot(rpv_post, aes(soil2, rpv, shape = nitrogen_added, color = inoculation, fill = inoculation, group = interaction(nitrogen_added, inoculation))) +
   geom_point(data = rpv_dat, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.5)) +
   stat_pointinterval(.width = 0.95, point_interval = mean_hdi, position = position_dodge(0.5), alpha = 0.7, point_size = 2.5, interval_size = 0.75) +
   scale_color_manual(values = col_pal[c(4,3)], name = "Virus inoculation",
-                     labels = c("RPV", "co-inoculation")) +
+                     labels = c("CYDV-RPV", "co-inoculation")) +
   scale_fill_manual(values = col_pal[c(4,3)], name = "Virus inoculation",
-                    labels = c("RPV", "co-inoculation")) +
-  scale_shape(name = "Nitrogen supply") +
+                    labels = c("CYDV-RPV", "co-inoculation")) +
+  scale_shape_manual(values = c(21, 24), name = "Nitrogen supply") +
   labs(x = "Long-term N enrichment treatment", y = "CYDV-RPV incidence") +
   theme_def +
-  guides(shape = guide_legend(order = 2), col = guide_legend(order = 1), 
+  guides(shape = guide_legend(order = 2, override.aes = list(fill = "black")), col = guide_legend(order = 1), 
          fill = guide_legend(order = 1))
 dev.off()
 
 # Co-infection prevalence
 tiff("output/Figure_4.tiff", width = 140, height = 90, units = "mm", res = 300, compression = "lzw")
-ggplot(co_post, aes(x = soil, y = coinfection, shape = nitrogen_added)) +
-  geom_point(data = co_dat, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.25), color = col_pal[3]) +
+ggplot(co_post, aes(x = soil2, y = coinfection, shape = nitrogen_added)) +
+  geom_point(data = co_dat, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.25), color = col_pal[3], fill = col_pal[3]) +
   stat_pointinterval(.width = 0.95, point_interval = mean_hdi, position = position_dodge(0.25), alpha = 0.7, point_size = 2.5, interval_size = 0.75, color = col_pal[3], fill = col_pal[3]) +
-  scale_shape(name = "Nitrogen supply") +
+  scale_shape_manual(values = c(21, 24), name = "Nitrogen supply") +
   labs(x = "Long-term N enrichment treatment", y = "Co-infection incidence") +
   theme_def
 dev.off()

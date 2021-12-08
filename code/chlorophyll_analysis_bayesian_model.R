@@ -28,6 +28,7 @@ dat2 <- dat %>%
   mutate(chlorophyll = mean(c(chlorophyll_1, chlorophyll_2, chlorophyll_3), na.rm = T)) %>%
   ungroup() %>%
   mutate(soil = fct_relevel(soil, "non-inoculated", "ambient N", "low N"),
+         soil2 = fct_recode(soil, "noninoculated" = "non-inoculated"), # editor removed hyphen
          infection = case_when(disease == "PAV" & pav == 1 ~ "PAV infection",
                                disease == "RPV" & rpv == 1 ~ "RPV infection",
                                disease == "Co" & pav == 1 & rpv == 1 ~ "Co-infection",
@@ -150,13 +151,12 @@ chlor_post <- as_draws_df(chlor_mod2) %>%
                names_to = "treatment",
                values_to = "chlorophyll") %>%
   rowwise() %>%
-  mutate(soil = str_split(treatment, "_")[[1]][1],
+  mutate(soil2 = str_split(treatment, "_")[[1]][1],
          N_added = str_split(treatment, "_")[[1]][2] %>% as.double(),
          infection_abb = str_split(treatment, "_")[[1]][3]) %>%
   ungroup() %>%
-  mutate(soil = str_replace(soil, "N", " N"),
-         soil = fct_relevel(soil, "noninoculated", "ambient N", "low N") %>%
-           fct_recode("non-inoculated" = "noninoculated"),
+  mutate(soil2 = str_replace(soil2, "N", " N"),
+         soil2 = fct_relevel(soil2, "noninoculated", "ambient N", "low N"),
          nitrogen_added = if_else(N_added == 1, "high", "low"),
          nitrogen_added = fct_relevel(nitrogen_added, "low"))
 
@@ -178,14 +178,18 @@ col_pal <- viridis_pal(direction = -1)(4)
 
 # figure
 tiff("output/Figure_6.tiff", width = 180, height = 90, units = "mm", res = 300, compression = "lzw")
-ggplot(chlor_post, aes(soil, chlorophyll, shape = nitrogen_added, color = infection_abb, fill = infection_abb, group = interaction(nitrogen_added, infection_abb))) +
+ggplot(chlor_post, aes(soil2, chlorophyll, shape = nitrogen_added, color = infection_abb, fill = infection_abb, group = interaction(nitrogen_added, infection_abb))) +
   geom_point(data = dat3, size = 0.75, alpha = 0.5, position = position_jitterdodge(0.05, 0.05, 0.6)) +
   stat_pointinterval(.width = 0.95, point_interval = mean_hdi, position = position_dodge(0.6), alpha = 0.7, point_size = 2.5, interval_size = 0.75) +
-  scale_color_manual(values = col_pal[c(1,2,4)], name = "Virus infection") +
-  scale_fill_manual(values = col_pal[c(1,2,4)], name = "Virus infection") +
-  scale_shape(name = "Nitrogen supply") +
+  scale_color_manual(values = col_pal[c(1,2,4)], name = "Virus infection",
+                     labels = c("mock", "BYDV-PAV", "CYDV-RPV")) +
+  scale_fill_manual(values = col_pal[c(1,2,4)], name = "Virus infection",
+                    labels = c("mock", "BYDV-PAV", "CYDV-RPV")) +
+  scale_shape_manual(values = c(21, 24), name = "Nitrogen supply") +
   labs(x = "Long-term N enrichment treatment", y = "Leaf chlorophyll content (SPAD)") +
-  theme_def
+  theme_def +
+  guides(shape = guide_legend(order = 2, override.aes = list(fill = "black")), col = guide_legend(order = 1), 
+         fill = guide_legend(order = 1))
 dev.off()
 
 
